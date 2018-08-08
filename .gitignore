@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Created by .ignore support plugin (hsz.mobi)
 ### macOS template
 # General
@@ -27,6 +28,8 @@ Network Trash Folder
 Temporary Items
 .apdisk
 ### Android template
+=======
+>>>>>>> 9bea1fdc52a23d680787c2288341b41e1c3ca237
 # Built application files
 *.apk
 *.ap_
