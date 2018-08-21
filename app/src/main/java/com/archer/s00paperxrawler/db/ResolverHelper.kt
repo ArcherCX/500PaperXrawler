@@ -6,6 +6,7 @@ import android.util.Log
 import com.archer.s00paperxrawler.MyApp
 
 private const val TAG = "ResolverHelper"
+
 /**
  * Created by Chen Xin on 2018/8/16.
  * ContentResolver Helper
@@ -16,6 +17,9 @@ enum class ResolverHelper {
     fun addPhotoDetail(url: String) {
         Log.d(TAG, "addPhotoDetail() called with: url = [ $url ]")
         val uri = PaperInfoContract.PHOTO_DETAIL_CONTENT_URI
-        MyApp.AppCtx.contentResolver.insert(uri, ContentValues().apply { put(PaperInfoContract.Columns.PHOTO_DETAIL_URL, url) })
+        MyApp.AppCtx.contentResolver.insert(uri, ContentValues()
+                .apply { put(PaperInfoContract.Columns.PHOTO_DETAIL_URL, url) }
+                .apply { put(PaperInfoContract.Columns.USED, 0) }
+        )
     }
 }

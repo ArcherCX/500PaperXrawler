@@ -1,19 +1,23 @@
-package com.archer.s00paperxrawler
+package com.archer.s00paperxrawler.service
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.graphics.Bitmap
 import android.os.Build
-import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
-import android.support.v7.app.AppCompatActivity
+import android.service.wallpaper.WallpaperService
 import android.text.TextUtils
 import android.util.Log
+import android.view.SurfaceHolder
 import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.archer.s00paperxrawler.db.ResolverHelper
+import com.archer.s00paperxrawler.strategy.ICrawlStrategy
+import com.archer.s00paperxrawler.strategy.getCrawlStrategy
 import com.archer.s00paperxrawler.utils.JsCallback
 import com.archer.s00paperxrawler.utils.JsLog
 import com.archer.s00paperxrawler.utils.Pref
@@ -24,34 +28,32 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import org.jsoup.Jsoup
-import java.io.BufferedReader
 import java.io.File
 import java.io.StringReader
 import java.util.*
-import java.util.concurrent.TimeUnit
 
-private const val TAG = "MainActivity"
+private const val TAG = "LiveWallService"
 
-class MainActivity : AppCompatActivity() {
-    lateinit var webView: WebView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        /*webView = WebView(this)
-        setContentView(webView)
-        Observable.timer(3, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            Log.w(TAG, "onCreate: Delay 3 seconds")
-            load()
-        }*/
+class LiveWallService : WallpaperService() {
+    private lateinit var webView: WebView
+    private lateinit var strategy: ICrawlStrategy
+    override fun onCreateEngine(): Engine {
+        Log.d(TAG, "onCreateEngine() called ${Thread.currentThread()}")
+        init()
+        return MyEngine()
     }
 
-    fun load() {
-        val settings = webView.settings
-        settings.javaScriptEnabled = true
-        settings.blockNetworkImage = true
-        webView.addJavascriptInterface(JsLog.INSTANCE, "Log")
-        webView.addJavascriptInterface(JsCallback.INSTANCE, "JsCallback")
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun init() {
+        if (!::strategy.isInitialized) strategy = getCrawlStrategy()
+        if (!::webView.isInitialized) {
+            webView = WebView(this)
+            val settings = webView.settings
+            settings.javaScriptEnabled = true
+            settings.blockNetworkImage = true
+            webView.addJavascriptInterface(JsLog.INSTANCE, "Log")
+            webView.addJavascriptInterface(JsCallback.INSTANCE, "JsCallback")
+        }
         Observable.create<String> { emitter: ObservableEmitter<String> ->
             webView.webViewClient = object : WebViewClient() {
 
@@ -82,15 +84,13 @@ class MainActivity : AppCompatActivity() {
             }
             webView.loadUrl(getLoadUri())
             Log.d(TAG, "after webView.loadUrl: ${webView.visibility == View.VISIBLE}")
-        }.subscribeOn(AndroidSchedulers.mainThread()).zipWith(Observable.create<String> {
-            val input = assets.open("dom_listener.js")
-            it.onNext(input.bufferedReader().use(BufferedReader::readText))
-            it.onComplete()
-        }.subscribeOn(Schedulers.io()), BiFunction<String, String, String> { innerHTML, script ->
-            if (Looper.getMainLooper().thread == Thread.currentThread()) webView.evaluateJavascript(script, null)
-            else runOnUiThread { webView.evaluateJavascript(script, null) }
-            return@BiFunction innerHTML
-        }).observeOn(Schedulers.io()).map {
+        }.subscribeOn(AndroidSchedulers.mainThread()).zipWith(
+                strategy.evaluateJSBeforeParse(),
+                BiFunction<String, String, String> { innerHTML, script ->
+                    if (Looper.getMainLooper().thread == Thread.currentThread()) webView.evaluateJavascript(script, null)
+                    else Handler(Looper.getMainLooper()).post { webView.evaluateJavascript(script, null) }
+                    return@BiFunction innerHTML
+                }).observeOn(Schedulers.io()).map {
             //使用Properties类来将转义后的字符恢复回来
             val properties = Properties()
             properties.load(StringReader("key=$it"))
@@ -99,28 +99,29 @@ class MainActivity : AppCompatActivity() {
             file.deleteOnExit()
             file.writeText(ret)
             return@map file
-        }.observeOn(Schedulers.computation()).flatMap { file: File ->
-            val parse = Jsoup.parse(file, "utf-8", Pref().baseUri)
-            val elements = parse.select("div.photo_thumbnail")
-            if (elements.isEmpty()) {
-                Log.i(TAG, "onCreate: elements.isEmpty()")
-                return@flatMap Observable.just("")
-            } else {
-                Log.w(TAG, "onCreate: elements.is Not Empty()")
-                val urls = arrayOfNulls<String>(elements.size)
-                for ((index, item) in elements.withIndex()) {
-                    urls[index] = item.getElementsByClass("photo_link ").attr("href")
-                }
-                return@flatMap Observable.fromArray(*urls)
-            }
-        }.map {
-            ResolverHelper.INSTANCE.addPhotoDetail(it)
-        }.takeLast(1).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            Log.d(TAG, "onNext() called ")
-            webView.evaluateJavascript("observer != null") { value ->
-                Log.d(TAG, "observer check called $value")
-            }
+        }.observeOn(Schedulers.computation())
+                .flatMap(strategy.parseHTML())
+                .map(strategy.handleResult())
+                .takeLast(1)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        strategy.evaluateJSBeforeDestroy(webView)
+    }
+
+    inner class MyEngine : Engine() {
+
+        override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+            super.onSurfaceChanged(holder, format, width, height)
+            Log.d(TAG, "${Thread.currentThread()} onSurfaceChanged() called with: holder = [ $holder ], format = [ $format ], width = [ $width ], height = [ $height ]")
         }
 
+        override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
+            super.onSurfaceDestroyed(holder)
+            Log.d(TAG, "onSurfaceDestroyed() called with: holder = [ $holder ]")
+        }
     }
 }

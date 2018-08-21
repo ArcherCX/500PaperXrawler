@@ -3,6 +3,7 @@
     package="com.archer.s00paperxrawler">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
 
     <application
         android:name=".MyApp"
@@ -25,6 +26,20 @@
             android:authorities="${CONTENT_PROVIDER_AUTHORITY}"
             android:enabled="true"
             android:exported="false" />
+
+        <service
+            android:label="@string/app_name"
+            android:name=".service.LiveWallService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/wallpaper" />
+        </service>
     </application>
 
 </manifest>
