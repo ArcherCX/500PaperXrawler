@@ -8,21 +8,30 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.text.TextUtils
-import android.util.SparseArray
 import com.archer.s00paperxrawler.BuildConfig
+import com.archer.s00paperxrawler.utils.prefs
 
 private typealias Segment = PaperInfoContract.PathSegment
 private typealias PaperColumns = PaperInfoContract.Columns
 
-private const val CP_CODE_INSERT_PHOTO_DETAIL = 0
-
 class MyContentProvider : ContentProvider() {
+
     companion object {
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH)
-        private val pairPhotoDetail = Pair(Segment.PHOTO_DETAIL, CP_CODE_INSERT_PHOTO_DETAIL)
+        private val pairPhotoDetail = Pair(Segment.PHOTO_DETAIL, 0)
+        private val pairUnusedPhotos = Pair(Segment.UNUSED_PHOTOS, 1)
+        private val pairUndownloadPhotos = Pair(Segment.UNDOWNLOAD_PHOTOS, 2)
+        private val pairPhotoPath = Pair(Segment.PHOTO_PATH, 3)
+
+        private fun UriMatcher.addURI(pair:Pair<String,Int>) {
+            addURI(BuildConfig.CONTENT_PROVIDER_AUTHORITY, pair.first, pair.second)
+        }
 
         init {
-            uriMatcher.addURI(BuildConfig.CONTENT_PROVIDER_AUTHORITY, pairPhotoDetail.first, pairPhotoDetail.second)
+            uriMatcher.addURI(pairPhotoDetail)
+            uriMatcher.addURI(pairUnusedPhotos)
+            uriMatcher.addURI(pairUndownloadPhotos)
+            uriMatcher.addURI(pairPhotoPath)
         }
     }
 
@@ -30,11 +39,16 @@ class MyContentProvider : ContentProvider() {
 
     override fun query(uri: Uri, projection: Array<String>?, selection: String?,
                        selectionArgs: Array<String>?, sortOrder: String?): Cursor? {
+        val db = getReadableDB()
+        when (uriMatcher.match(uri)) {
+            pairUnusedPhotos.second -> return db.query(VIEWS.VIEW_UNUSED_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
+            pairUndownloadPhotos.second -> return db.query(VIEWS.VIEW_UNDOWNLOAD_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder, "${prefs().maxCacheSize}")
+        }
         return null
     }
 
     override fun insert(uri: Uri, values: ContentValues): Uri? {
-        val db = DBHelper.Singleton.instance.writableDatabase
+        val db = getWritableDB()
         var id = 0L
         when (uriMatcher.match(uri)) {
             pairPhotoDetail.second -> {
@@ -50,7 +64,14 @@ class MyContentProvider : ContentProvider() {
 
     override fun update(uri: Uri, values: ContentValues?, selection: String?,
                         selectionArgs: Array<String>?): Int {
-        TODO("Implement this to handle requests to update one or more rows.")
+        val db = getWritableDB()
+        var effect = 0
+        when (uriMatcher.match(uri)) {
+            pairPhotoPath.second ->{
+                effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
+            }
+        }
+        return effect
     }
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {

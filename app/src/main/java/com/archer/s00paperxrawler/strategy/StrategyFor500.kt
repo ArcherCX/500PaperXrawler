@@ -4,9 +4,8 @@ import android.util.Log
 import android.webkit.WebView
 import com.archer.s00paperxrawler.MyApp
 import com.archer.s00paperxrawler.db.ResolverHelper
-import com.archer.s00paperxrawler.utils.Pref
+import com.archer.s00paperxrawler.utils.prefs
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
 import org.jsoup.Jsoup
@@ -28,7 +27,7 @@ class StrategyFor500 : ICrawlStrategy {
             }.subscribeOn(Schedulers.io())
 
     override fun parseHTML(): Function<File, Observable<String>> = Function {
-        val parse = Jsoup.parse(it, "utf-8", Pref().baseUri)
+        val parse = Jsoup.parse(it, "utf-8", prefs().baseUri)
         val elements = parse.select("div.photo_thumbnail")
         if (elements.isEmpty()) {
             Log.i(TAG, "onCreate: elements.isEmpty()")
@@ -45,6 +44,7 @@ class StrategyFor500 : ICrawlStrategy {
 
     override fun handleResult(): Function<String, Any> = Function {
         ResolverHelper.INSTANCE.addPhotoDetail(it)
+
     }
 
     override fun evaluateJSBeforeDestroy(webView: WebView) {

@@ -16,7 +16,7 @@ import android.webkit.WebViewClient
 import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.utils.JsCallback
 import com.archer.s00paperxrawler.utils.JsLog
-import com.archer.s00paperxrawler.utils.Pref
+import com.archer.s00paperxrawler.utils.prefs
 import com.archer.s00paperxrawler.utils.getLoadUri
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
             file.writeText(ret)
             return@map file
         }.observeOn(Schedulers.computation()).flatMap { file: File ->
-            val parse = Jsoup.parse(file, "utf-8", Pref().baseUri)
+            val parse = Jsoup.parse(file, "utf-8", prefs().baseUri)
             val elements = parse.select("div.photo_thumbnail")
             if (elements.isEmpty()) {
                 Log.i(TAG, "onCreate: elements.isEmpty()")

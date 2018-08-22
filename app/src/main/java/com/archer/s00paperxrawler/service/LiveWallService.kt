@@ -2,11 +2,14 @@ package com.archer.s00paperxrawler.service
 
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.service.wallpaper.WallpaperService
+import android.support.v4.content.CursorLoader
+import android.support.v4.content.Loader
 import android.text.TextUtils
 import android.util.Log
 import android.view.SurfaceHolder
@@ -15,19 +18,17 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.archer.s00paperxrawler.db.ResolverHelper
+import com.archer.s00paperxrawler.db.PaperInfoContract
 import com.archer.s00paperxrawler.strategy.ICrawlStrategy
 import com.archer.s00paperxrawler.strategy.getCrawlStrategy
 import com.archer.s00paperxrawler.utils.JsCallback
 import com.archer.s00paperxrawler.utils.JsLog
-import com.archer.s00paperxrawler.utils.Pref
 import com.archer.s00paperxrawler.utils.getLoadUri
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
-import org.jsoup.Jsoup
 import java.io.File
 import java.io.StringReader
 import java.util.*
@@ -36,9 +37,13 @@ private const val TAG = "LiveWallService"
 
 class LiveWallService : WallpaperService() {
     private lateinit var webView: WebView
+
     private lateinit var strategy: ICrawlStrategy
+    override fun onCreate() {
+        super.onCreate()
+    }
+
     override fun onCreateEngine(): Engine {
-        Log.d(TAG, "onCreateEngine() called ${Thread.currentThread()}")
         init()
         return MyEngine()
     }
@@ -102,8 +107,6 @@ class LiveWallService : WallpaperService() {
         }.observeOn(Schedulers.computation())
                 .flatMap(strategy.parseHTML())
                 .map(strategy.handleResult())
-                .takeLast(1)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe()
     }
 

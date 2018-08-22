@@ -7,6 +7,6 @@ package com.archer.s00paperxrawler.utils
 
 /**获取图片源Uri*/
 fun getLoadUri(): String {
-    val pref = Pref()
+    val pref = prefs()
     return "${pref.baseUri}/${pref.feature}/${pref.categories}"
 }

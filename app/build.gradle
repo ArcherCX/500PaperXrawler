@@ -46,4 +46,5 @@ dependencies {
     implementation 'com.jakewharton.rxbinding2:rxbinding:2.1.1'
     implementation "com.github.satoshun.RxWebView:rxwebview-kotlin:2.2.0"
     implementation 'org.jetbrains.kotlin:kotlin-reflect:1.2.61'
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
 }
