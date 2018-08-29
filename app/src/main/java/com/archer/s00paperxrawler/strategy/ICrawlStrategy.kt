@@ -6,7 +6,7 @@ import io.reactivex.functions.Function
 import java.io.File
 
 /**选取有效策略*/
-fun getCrawlStrategy(): ICrawlStrategy = StrategyFor500()
+fun getCrawlStrategy(): ICrawlStrategy = StrategyFor500.Singleton.instance
 
 /**
  * Created by Chen Xin on 2018/8/21.

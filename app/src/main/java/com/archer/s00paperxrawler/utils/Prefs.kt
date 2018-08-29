@@ -33,14 +33,14 @@ enum class Prefs {
         set(value) = pref.edit().putString("categories", value).apply()
 
     var minCacheSize: Int
-        get() = pref.getInt("min_cache_size", 10)
+        get() = pref.getInt("min_cache_size", 1)
         set(value) = pref.edit().putInt("min_cache_size", value).apply()
 
     var maxCacheSize: Int
-        get() = pref.getInt("max_cache_size", 30)
+        get() = pref.getInt("max_cache_size", 3)
         set(value) = pref.edit().putInt("max_cache_size", value).apply()
 
-    var defaultCachePath: String
+    var photosCachePath: String
         get() {
             var path = pref.getString("default_cache_path", "")
             if (TextUtils.isEmpty(path)) {
@@ -50,5 +50,9 @@ enum class Prefs {
             return path
         }
         set(_){}
+
+    var isCacheFull: Boolean
+        get() = pref.getBoolean("is_cache_full", false)
+        set(value) = pref.edit().putBoolean("is_cache_full", value).apply()
 
 }

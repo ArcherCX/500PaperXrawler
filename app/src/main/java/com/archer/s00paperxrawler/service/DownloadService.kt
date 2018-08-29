@@ -2,11 +2,10 @@ package com.archer.s00paperxrawler.service
 
 import android.app.IntentService
 import android.content.Intent
-import android.content.Context
 import android.util.Log
+import com.archer.s00paperxrawler.MyApp
 import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.utils.prefs
-import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -14,9 +13,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "DownloadService"
-private const val ACTION_DOWNLOAD = "com.archer.s00paperxrawler.service.action.DOWNLOAD"
 
-private val okClient =
+public val okClient: OkHttpClient =
         OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .build()
@@ -25,23 +23,24 @@ class DownloadService : IntentService("DownloadService") {
 
     override fun onHandleIntent(intent: Intent?) {
         when (intent?.action) {
-            ACTION_DOWNLOAD -> {
-                handleActionDownload()
-            }
+            ACTION_PHOTOS_DOWNLOAD -> handlePhotosDownload()
         }
     }
 
-    private fun handleActionDownload() {
+    private fun handlePhotosDownload() {
+        if (prefs().isCacheFull) return
         val builder = Request.Builder()
         val buf = ByteArray(1024)
-        val dir = prefs().defaultCachePath
+        val dir = prefs().photosCachePath
         ResolverHelper.INSTANCE.getUndownloadPhotos().map {
-            Log.i(TAG, "start download img : ${it.second}")
-            val url = builder.url(it.second).apply { tag(Int::class.java, it.first) }
+            Log.i(TAG, "start download img : ${it.url}")
+            val url = builder.url(it.url)
+                    .apply { tag(java.lang.Integer::class.java, java.lang.Integer(it.id)) }
+                    .apply { tag(java.lang.Long::class.java, java.lang.Long(it.photoId)) }
             return@map okClient.newCall(url.build()).execute()
         }.map { response: Response ->
-            Log.d(TAG, "handleActionDownload() called response code = ${response.code()}")
-            val file = File("$dir/${System.currentTimeMillis()}")
+            Log.d(TAG, "handlePhotosDownload() called response code = ${response.code()}")
+            val file = File("$dir/${response.request().tag(java.lang.Long::class.java)}")
             val byteStream = response.body()?.byteStream()
             if (byteStream != null) {
                 val outputStream = file.outputStream()
@@ -52,17 +51,21 @@ class DownloadService : IntentService("DownloadService") {
                         read = byteStream.read(buf)
                     }
                 }
-                val id = response.request().tag(Int::class.java)
-                ResolverHelper.INSTANCE.setPhotoPath(id!!, file.name)
+                val id = response.request().tag(java.lang.Integer::class.java)
+                ResolverHelper.INSTANCE.setPhotoDownloaded(id!!.toInt())
             }
         }.subscribe()
     }
 
     companion object {
+        private const val ACTION_PHOTOS_DOWNLOAD = "com.archer.s00paperxrawler.service.action.PHOTOS_DOWNLOAD"
+
+        /**下载照片*/
         @JvmStatic
-        fun startActionDownload(context: Context) {
+        fun startPhotosDownload() {
+            val context = MyApp.AppCtx
             val intent = Intent(context, DownloadService::class.java).apply {
-                action = ACTION_DOWNLOAD
+                action = ACTION_PHOTOS_DOWNLOAD
             }
             context.startService(intent)
         }

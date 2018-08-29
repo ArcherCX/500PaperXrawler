@@ -9,29 +9,29 @@ import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.text.TextUtils
 import com.archer.s00paperxrawler.BuildConfig
-import com.archer.s00paperxrawler.utils.prefs
 
 private typealias Segment = PaperInfoContract.PathSegment
-private typealias PaperColumns = PaperInfoContract.Columns
 
 class MyContentProvider : ContentProvider() {
 
     companion object {
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH)
-        private val pairPhotoDetail = Pair(Segment.PHOTO_DETAIL, 0)
-        private val pairUnusedPhotos = Pair(Segment.UNUSED_PHOTOS, 1)
-        private val pairUndownloadPhotos = Pair(Segment.UNDOWNLOAD_PHOTOS, 2)
-        private val pairPhotoPath = Pair(Segment.PHOTO_PATH, 3)
+        private val pairUnusedPhotos = Pair(Segment.UNUSED_PHOTOS, 0)
+        private val pairUndownloadPhotos = Pair(Segment.UNDOWNLOAD_PHOTOS, 1)
+        private val pairPaperInfo = Pair(Segment.PAPER_INFO, 2)
 
-        private fun UriMatcher.addURI(pair:Pair<String,Int>) {
-            addURI(BuildConfig.CONTENT_PROVIDER_AUTHORITY, pair.first, pair.second)
+        private fun UriMatcher.addURI(vararg pairs: Pair<String, Int>) {
+            for (pair in pairs) {
+                addURI(BuildConfig.CONTENT_PROVIDER_AUTHORITY, pair.first, pair.second)
+            }
         }
 
         init {
-            uriMatcher.addURI(pairPhotoDetail)
-            uriMatcher.addURI(pairUnusedPhotos)
-            uriMatcher.addURI(pairUndownloadPhotos)
-            uriMatcher.addURI(pairPhotoPath)
+            uriMatcher.addURI(
+                    pairUnusedPhotos,
+                    pairUndownloadPhotos,
+                    pairPaperInfo
+            )
         }
     }
 
@@ -42,7 +42,7 @@ class MyContentProvider : ContentProvider() {
         val db = getReadableDB()
         when (uriMatcher.match(uri)) {
             pairUnusedPhotos.second -> return db.query(VIEWS.VIEW_UNUSED_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
-            pairUndownloadPhotos.second -> return db.query(VIEWS.VIEW_UNDOWNLOAD_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder, "${prefs().maxCacheSize}")
+            pairUndownloadPhotos.second -> return db.query(VIEWS.VIEW_UNDOWNLOAD_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
         }
         return null
     }
@@ -51,10 +51,7 @@ class MyContentProvider : ContentProvider() {
         val db = getWritableDB()
         var id = 0L
         when (uriMatcher.match(uri)) {
-            pairPhotoDetail.second -> {
-                if (!TextUtils.isEmpty(values.getAsString(PaperColumns.PHOTO_DETAIL_URL)))
-                    id = db.insertWithOnConflict(TABLES.PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
-            }
+            pairPaperInfo.second -> id = db.insertWithOnConflict(TABLES.PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
         }
         if (id < 0) {
             return null
@@ -67,7 +64,7 @@ class MyContentProvider : ContentProvider() {
         val db = getWritableDB()
         var effect = 0
         when (uriMatcher.match(uri)) {
-            pairPhotoPath.second ->{
+            pairPaperInfo.second -> {
                 effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
             }
         }

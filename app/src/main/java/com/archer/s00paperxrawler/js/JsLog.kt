@@ -1,12 +1,21 @@
-package com.archer.s00paperxrawler.utils
+package com.archer.s00paperxrawler.js
 
 import android.util.Log
 import android.webkit.JavascriptInterface
+import android.webkit.WebView
 
 private const val TAG = "JsLog"
 
-enum class JsLog {
+enum class JsLog : JsInterface {
     INSTANCE;
+
+    override fun add(webView: WebView) {
+        webView.addJavascriptInterface(this, "Log")
+    }
+
+    override fun remove(webView: WebView) {
+        webView.removeJavascriptInterface("Log")
+    }
 
     @JavascriptInterface
     fun d(tag: String, msg: String) {

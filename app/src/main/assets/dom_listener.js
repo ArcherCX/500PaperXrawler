@@ -23,7 +23,7 @@ function changeCallback(mutations, observer) {
             addedNodes.forEach(function (node) {
                 if (node.className.startsWith("photo_thumbnail")) {
                     var href = node.getElementsByClassName("photo_link")[0].getAttribute("href");
-                    JsCallback.addPhotoDetail(href)
+                    JsCallback.addPhotoInfo(href)
                 }
             })
         }

@@ -37,8 +37,9 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.ASPECT_RATIO}       REAL," +
                         "${PaperInfoColumns.PHOTO_URL}          TEXT," +
                         "${PaperInfoColumns.PHOTO_NAME}         VARCHAR(50)," +
+                        "${PaperInfoColumns.PHOTO_ID}           INTEGER," +
                         "${PaperInfoColumns.PH}                 VARCHAR(50)," +
-                        "${PaperInfoColumns.FILE_NAME}          VARCHAR(20)," +
+//                        "${PaperInfoColumns.FILE_NAME}          VARCHAR(20)," +
                         "${PaperInfoColumns.USED}               INTEGER DEFAULT 0," +
                         "${PaperInfoColumns.DOWNLOAD}           INTEGER DEFAULT 0," +
                         "${PaperInfoColumns.SETTLED_DATE}       INTEGER)" +
@@ -49,17 +50,10 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${BaseColumns._ID}, " +
                         "${PaperInfoColumns.PHOTO_DETAIL_URL}," +
                         "${PaperInfoColumns.ASPECT_RATIO}, " +
-                        "${PaperInfoColumns.FILE_NAME}, " +
+                        "${PaperInfoColumns.PHOTO_ID}, " +
                         "${PaperInfoColumns.PHOTO_URL} " +
                         "FROM ${TABLES.PAPER_INFO} " +
-                        "WHERE ${PaperInfoColumns.USED} == 0"
-
-        private const val SQL_CREATE_UNDOWNLOAD_PHOTOS_VIEW =
-                "CREATE VIEW IF NOT EXISTS ${VIEWS.VIEW_UNDOWNLOAD_PHOTOS} AS SELECT " +
-                        "${BaseColumns._ID}, " +
-                        "${PaperInfoColumns.PHOTO_URL} " +
-                        "FROM ${TABLES.PAPER_INFO} " +
-                        "WHERE ${PaperInfoColumns.DOWNLOAD} == 0"
+                        "WHERE ${PaperInfoColumns.USED} == 0 AND ${PaperInfoColumns.DOWNLOAD} == 1"
 
         private const val SQL_CREATE_HISTORY_VIEW =
                 "CREATE VIEW IF NOT EXISTS ${VIEWS.VIEW_HISTORY} AS SELECT " +
@@ -68,11 +62,19 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.ASPECT_RATIO}, " +
                         "${PaperInfoColumns.SETTLED_DATE}," +
                         "${PaperInfoColumns.PH}, " +
-                        "${PaperInfoColumns.FILE_NAME}, " +
+                        "${PaperInfoColumns.PHOTO_ID}, " +
                         "${PaperInfoColumns.PHOTO_NAME} " +
                         "FROM ${TABLES.PAPER_INFO} " +
                         "WHERE ${PaperInfoColumns.USED} == 1 " +
                         "ORDER BY ${PaperInfoColumns.SETTLED_DATE} DESC"
+
+        private const val SQL_CREATE_UNDOWNLOAD_PHOTOS_VIEW =
+                "CREATE VIEW IF NOT EXISTS ${VIEWS.VIEW_UNDOWNLOAD_PHOTOS} AS SELECT " +
+                        "${BaseColumns._ID}, " +
+                        "${PaperInfoColumns.PHOTO_URL}," +
+                        "${PaperInfoColumns.PHOTO_ID} " +
+                        "FROM ${TABLES.PAPER_INFO} " +
+                        "WHERE ${PaperInfoColumns.DOWNLOAD} == 0"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
