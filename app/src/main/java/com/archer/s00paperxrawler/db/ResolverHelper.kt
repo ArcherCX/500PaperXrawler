@@ -6,7 +6,9 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.BaseColumns
 import android.text.TextUtils
+import android.util.Log
 import com.archer.s00paperxrawler.MyApp
+import com.archer.s00paperxrawler.service.DownloadService
 import com.archer.s00paperxrawler.utils.prefs
 import io.reactivex.Observable
 import java.io.File
@@ -23,17 +25,41 @@ data class DownloadInfo(val id: Int, val url: String, val photoId: Long)
 enum class ResolverHelper {
     INSTANCE;
 
-    private fun ContentResolver.query(uri: Uri): Cursor {
-        return query(uri, null, null, null, null)
+    private fun ContentResolver.queryAdapter(uri: Uri, projection: Array<String>? = null, selection: String? = null, selectionArgs: Array<String>? = null, sortOrder: String? = null): Cursor {
+        return query(uri, projection, selection, selectionArgs, sortOrder)
     }
 
     private fun getCR(): ContentResolver = MyApp.AppCtx.contentResolver
 
 
     /**获取已下载到本地但未使用的照片*/
-    private fun getUnusedPhotos(): Cursor {
-        return getCR().query(PaperInfoContract.UNUSED_PHOTOS_URI)
+    fun getUnusedPhotos(limit: Int = -1): Cursor {
+        val sLimit = if (limit > 0) " LIMIT $limit" else ""
+        return getCR().queryAdapter(PaperInfoContract.UNUSED_PHOTOS_URI, sortOrder = "${BaseColumns._ID}$sLimit")
     }
+
+    /**
+     * 未下载的图片信息
+     */
+    private fun getUnDownPhotos(): Cursor {
+        return getCR().queryAdapter(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI)
+    }
+
+    /**
+     * 缓存的图片是否足够
+     * @param unusedPhotos 当前的有效缓存图片数量
+     */
+    private fun isCacheEnough(unusedPhotos: Int = getUnusedPhotos().use { it.count }): Boolean = unusedPhotos > prefs().minCacheSize
+
+    /**
+     * 是否应该加载更多图片信息到本地：已缓存的图片数量小于最小缓存数量，且可下载的图片信息小于最大缓存数量与已缓存图片的差值
+     */
+    fun shouldLoadMoreInfo(): Boolean {
+        val unusedPhotos = getUnusedPhotos().use { it.count }
+        val unDown = getUnDownPhotos().use { it.count }
+        return !isCacheEnough(unusedPhotos) && unDown < prefs().maxCacheSize - unusedPhotos
+    }
+
 
     /**获取未下载的照片地址，只获取一定数量的条目*/
     fun getUndownloadPhotos(): Observable<DownloadInfo> {
@@ -41,8 +67,9 @@ enum class ResolverHelper {
             val prefs = prefs()
             val size = File(prefs.photosCachePath).list().size
             val limit = if (size == 0) prefs.maxCacheSize else {
-                if (getUnusedPhotos().use { it.count } > prefs.minCacheSize) 0
-                else prefs.maxCacheSize - prefs.minCacheSize
+                val unusedCount = getUnusedPhotos().use { it.count }
+                if (isCacheEnough(unusedCount)) 0
+                else prefs.maxCacheSize - unusedCount
             }
             if (limit <= 0) {
                 emitter.onComplete()
@@ -61,15 +88,24 @@ enum class ResolverHelper {
 
     /**标记目标图片已下载到本地*/
     fun setPhotoDownloaded(id: Int): Int {
-        val values = ContentValues(1).apply {
-            put(PaperInfoColumns.DOWNLOAD, 1)
+        val values = ContentValues(1).apply { put(PaperInfoColumns.DOWNLOAD, 1) }
+        return getCR().update(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI, values, "${BaseColumns._ID} == $id", null)
+    }
+
+    /**设置图片为已使用*/
+    fun setPhotoUsed(id: Long): Int {
+        prefs().isCacheEnough = isCacheEnough()
+        val values = ContentValues().apply {
+            put(PaperInfoColumns.USED, 1)
+            put(PaperInfoColumns.SETTLED_DATE, System.currentTimeMillis())
         }
-        return getCR().update(PaperInfoContract.PAPER_INFO_URI, values, "${BaseColumns._ID} == $id", null)
+        return getCR().update(PaperInfoContract.UNUSED_PHOTOS_URI, values, "${PaperInfoColumns.PHOTO_ID} == $id", null)
     }
 
     /**添加照片信息
      * @param detailUrl 照片*/
-    fun addPhotoInfo(detailUrl: String, id: Int, name: String, url: String, ph: String, aspect: Float) {
+    fun addPhotoInfo(detailUrl: String, id: Long, name: String, url: String, ph: String, aspect: Float) {
+        Log.d(TAG, "addPhotoInfo() called with: detailUrl = [ $detailUrl ], id = [ $id ], name = [ $name ], url = [ $url ], ph = [ $ph ], aspect = [ $aspect ]")
         ContentValues(6).apply {
             put(PaperInfoColumns.USED, 0)
             if (!TextUtils.isEmpty(detailUrl)) put(PaperInfoColumns.PHOTO_DETAIL_URL, detailUrl)
@@ -81,14 +117,7 @@ enum class ResolverHelper {
         }.let { getCR().insert(PaperInfoContract.PAPER_INFO_URI, it) }
     }
 
-    /*fun checkParseResult(html: String): Boolean {
-        ContentValues().apply {
-            put(PaperInfoColumns.PHOTO_DETAIL_URL, html)
-        }.let {
-            val ret = getCR().query(PaperInfoContract.PAPER_INFO_URI, null, null, null, null)
-            ret.use {
-                it.moveToNext()
-            }
-        }
-    }*/
+    /**获取目标图片宽高比*/
+//    fun getPhotoAspect(photoId: Long): Float {
+//    }
 }

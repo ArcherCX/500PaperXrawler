@@ -1,11 +1,15 @@
 package com.archer.s00paperxrawler.utils
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Point
 import android.preference.PreferenceManager
 import android.text.TextUtils
+import android.util.Log
+import android.view.WindowManager
 import com.archer.s00paperxrawler.MyApp
+import com.archer.s00paperxrawler.service.DownloadService
 import java.io.File
-import kotlin.reflect.KProperty
 
 fun prefs(): Prefs {
     return Prefs.INSTANCE
@@ -22,6 +26,10 @@ enum class Prefs {
 
     var baseUri: String
         get() = pref.getString("base_uri", "https://500px.com")
+        set(value) = pref.edit().putString("base_uri", value).apply()
+
+    var baseApiUri: String
+        get() = pref.getString("base_uri", "https://api.500px.com/v1/photos?")
         set(value) = pref.edit().putString("base_uri", value).apply()
 
     var feature: String
@@ -49,10 +57,36 @@ enum class Prefs {
             }
             return path
         }
-        set(_){}
+        set(_) {}
 
-    var isCacheFull: Boolean
-        get() = pref.getBoolean("is_cache_full", false)
-        set(value) = pref.edit().putBoolean("is_cache_full", value).apply()
+    var isCacheEnough: Boolean
+        get() = pref.getBoolean("is_cache_enough", false)
+        set(value) {
+            pref.edit().putBoolean("is_cache_enough", value).apply()
+            if (!value) DownloadService.startPhotosDownload()
+        }
 
+    var csrfToken: String
+        get() = pref.getString("csrf_token", "")
+        set(value) = pref.edit().putString("csrf_token", value).apply()
+
+    var updateInterval: Long
+        get() = pref.getLong("update_interval", 1800)
+        set(value) = pref.edit().putLong("update_interval", value).apply()
+
+    var screenAspectRatio: Float
+        get() {
+            var aspect = pref.getFloat("screen_aspect_ratio", -1F)
+            if (aspect == -1F) {
+                val wm = MyApp.AppCtx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val point = Point()
+                wm.defaultDisplay.getRealSize(point)
+                val w = point.x.toFloat()
+                val h = point.y
+                aspect = w / h
+                pref.edit().putFloat("screen_aspect_ratio", aspect).apply()
+            }
+            return aspect
+        }
+        set(_) {}
 }

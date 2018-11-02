@@ -1,138 +1,191 @@
 package com.archer.s00paperxrawler.service
 
-import android.annotation.SuppressLint
-import android.annotation.TargetApi
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.service.wallpaper.WallpaperService
+import android.database.Cursor
+import android.provider.BaseColumns
+import android.support.v4.content.CursorLoader
+import android.support.v4.content.Loader
 import android.text.TextUtils
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.View
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import com.archer.s00paperxrawler.strategy.ICrawlStrategy
-import com.archer.s00paperxrawler.strategy.getCrawlStrategy
-import com.archer.s00paperxrawler.js.JsCallback
-import com.archer.s00paperxrawler.js.JsLog
+import com.archer.s00paperxrawler.db.PaperInfoColumns
+import com.archer.s00paperxrawler.db.PaperInfoContract
+import com.archer.s00paperxrawler.db.ResolverHelper
+import com.archer.s00paperxrawler.gl.GLRenderer
+import com.archer.s00paperxrawler.gl.OpenGLES2WallpaperService
+import com.archer.s00paperxrawler.utils.getLegacyApiUri
 import com.archer.s00paperxrawler.utils.getLoadUri
+import com.archer.s00paperxrawler.utils.prefs
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
-import java.io.File
-import java.io.StringReader
+import okhttp3.Request
+import org.json.JSONObject
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 private const val TAG = "LiveWallService"
 
-class LiveWallService : WallpaperService() {
-    private lateinit var webView: WebView
-
-    private lateinit var strategy: ICrawlStrategy
+class LiveWallService : OpenGLES2WallpaperService() {
 
     private lateinit var disposable: Disposable
 
-    override fun onCreate() {
-        super.onCreate()
+    /**加载图片信息次数统计，防止该方法过时后无限循环加载*/
+    private var loadInfoCount = 0
+
+    private val myRender by lazy { MyRenderer() }
+
+    override fun getNewRenderer(): GLRenderer {
+        return myRender
     }
 
-    override fun onCreateEngine(): Engine {
-        init()
-        return MyEngine()
-    }
+    override fun getRenderMode() = GLEngine.RENDERMODE_WHEN_DIRTY
 
-    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreateEngine(): Engine = MyEngine().also { init() }
+
     private fun init() {
-        if (!::strategy.isInitialized) strategy = getCrawlStrategy()
-        if (!::webView.isInitialized) {
-            webView = WebView(this)
-            val settings = webView.settings
-            settings.javaScriptEnabled = true
-            settings.blockNetworkImage = true
-            JsLog.INSTANCE.add(webView)
-            JsCallback.INSTANCE.add(webView)
+        if (!::disposable.isInitialized && ResolverHelper.INSTANCE.shouldLoadMoreInfo()) {
+            disposable = startLoadInfo()
         }
-        if (!::disposable.isInitialized) {
-            disposable = Observable.create<String> { emitter: ObservableEmitter<String> ->
-                webView.webViewClient = object : WebViewClient() {
-                    override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                        Log.e(TAG, "onReceivedError() called with: errorCode = [ $errorCode ], description = [ $description ], failingUrl = [ $failingUrl ]")
-                    }
+    }
 
-                    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                    override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
-                        Log.e(TAG, "onReceivedHttpError() called with: errorResponse = [ statusCode = ${errorResponse?.statusCode} , ${errorResponse?.reasonPhrase} ]")
-                    }
-
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        Log.d(TAG, "onPageFinished() called with: view = [ $view ], url = [ $url ]")
-                        webView.evaluateJavascript("document.children[0].innerHTML") { innerHTML ->
-                            if (TextUtils.isEmpty(innerHTML)) {
-                                emitter.onError(Exception("WebView not loaded anything"))
-                            } else {
-                                emitter.onNext(innerHTML)
-                                emitter.onComplete()
+    /**开始加载图片信息*/
+    private fun startLoadInfo(): Disposable {
+        return Observable.create<String> { emitter: ObservableEmitter<String> ->
+            val csrfToken = prefs().csrfToken
+            if (TextUtils.isEmpty(csrfToken)) {
+                val request = Request.Builder().url(getLoadUri()).build()
+                val response = okClient.newCall(request).execute()
+                if (response.body() == null) {
+                    emitter.onError(Exception("CSRF Token request failed with null response body"))
+                    return@create
+                } else {
+                    val ret = response.body()?.string()!!
+                    val start = "<meta name=\"csrf-token\" content=\""
+                    val startIndex = ret.indexOf(start) + start.length
+                    val csrf = ret.substring(startIndex, ret.indexOf('"', startIndex))
+                    prefs().csrfToken = csrf
+                    emitter.onNext(csrf)
+                }
+            } else emitter.onNext(csrfToken)
+            emitter.onComplete()
+        }.subscribeOn(Schedulers.io()).observeOn(Schedulers.io()).map { token ->
+            val builder = Request.Builder()
+            val request = builder.url(getLegacyApiUri(1))
+                    .header("X-CSRF-Token", token)
+                    .build()
+            return@map okClient.newCall(request).execute()
+        }.observeOn(Schedulers.computation()).map { response ->
+            when (response.code()) {
+                200 -> {
+                    loadInfoCount = 0
+                    val json = response.body()?.string()
+                    if (!TextUtils.isEmpty(json)) {
+                        val jsObject = JSONObject(json)
+                        val array = jsObject.optJSONArray("photos")
+                        if (array != null) {
+                            val length = array.length() - 1
+                            for (i in 0..length) {
+                                val photo = array.optJSONObject(i)
+                                val detailUrl = photo.optString("url")
+                                val photoId = photo.optLong("id", -1L)
+                                val photoName = photo.optString("name")
+                                val images = photo.optJSONArray("images").takeIf { it != null && it.length() > 0 }
+                                val photoURL = images?.let {
+                                    val img = it.optJSONObject(0)
+                                    return@let img.optString("https_url", null)
+                                            ?: img.optString("url")
+                                } ?: ""
+                                val ph = photo.optJSONObject("user")?.run {
+                                    var ph = "${optString("firstname")} ${optString("lastname")}"
+                                    if (TextUtils.isEmpty(ph.trim())) ph = optString("fullname")
+                                    return@run ph
+                                } ?: ""
+                                val w = photo.optInt("width", -1)
+                                val h = photo.optInt("height", -1)
+                                val aspect = if (w > 0 && h > 0) w.toFloat() / h else -1F
+                                ResolverHelper.INSTANCE.addPhotoInfo(detailUrl, photoId, photoName, photoURL, ph, aspect)
+                                DownloadService.startPhotosDownload()
                             }
+                        } else {
+                            throw Exception("API Json Response Format Changed, Can't Find \"photos\" JsonArray")
                         }
+                    } else {
+                        throw Exception("Not get photos info from 500px API")
                     }
                 }
-                webView.loadUrl(getLoadUri())
-                Log.d(TAG, "after webView.loadUrl: ${webView.visibility == View.VISIBLE}")
-            }.subscribeOn(AndroidSchedulers.mainThread()).zipWith(
-                    strategy.evaluateJSBeforeParse(),
-                    BiFunction<String, String, String> { innerHTML, script ->
-                        //                    TODO("可能找不到grid-container,js脚本需要完善")
-                        if (Looper.getMainLooper().thread == Thread.currentThread()) webView.evaluateJavascript(script, null)
-                        else Handler(Looper.getMainLooper()).post { webView.evaluateJavascript(script, null) }
-                        return@BiFunction innerHTML
-                    }).observeOn(Schedulers.io()).map {
-                //使用Properties类来将转义后的字符恢复回来
-                val properties = Properties()
-                properties.load(StringReader("key=$it"))
-                val ret = properties.getProperty("key")
-                val file = File(externalCacheDir, "ret.html")
-                file.deleteOnExit()
-                file.writeText(ret)
-                return@map file
-            }.observeOn(Schedulers.computation())
-                    .flatMap(strategy.parseHTML())
-                    .observeOn(Schedulers.io())
-                    .map(strategy.handleResult())
-                    .ignoreElements()
-                    .retry(2).subscribe()
-        }
+                401 -> {
+                    prefs().csrfToken = ""
+                    loadInfoCount++
+                    if (loadInfoCount > 3) {
+                        val token = response.request().header("X-CSRF-Token")
+                        throw Exception("API Request Authentication Error, Http Status Code : ${response.code()} , csrf token = $token ")
+                    } else {
+                        startLoadInfo()
+                    }
+                }
+                else -> {
+                    throw Exception("API Request Error, Http Status Code : ${response.code()}")
+                }
+            }
+        }.retry(3).subscribe({}, {
+            Log.e(TAG, "startLoadInfo: onError", it)
+        })
     }
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy() called")
         super.onDestroy()
-        if (::webView.isInitialized) webView.stopLoading()
-        if (::strategy.isInitialized) strategy.evaluateJSBeforeDestroy(webView)
         if (::disposable.isInitialized && !disposable.isDisposed) disposable.dispose()
-        if (::webView.isInitialized) {
-            webView.stopLoading()
-            JsLog.INSTANCE.remove(webView)
-            JsCallback.INSTANCE.remove(webView)
-        }
-
     }
 
-    inner class MyEngine : Engine() {
+    inner class MyEngine : OpenGLES2Engine(), Loader.OnLoadCompleteListener<Cursor> {
+        private val loader: CursorLoader = CursorLoader(this@LiveWallService, PaperInfoContract.UNUSED_PHOTOS_URI, arrayOf(PaperInfoColumns.PHOTO_ID, PaperInfoColumns.ASPECT_RATIO), null, null, "${BaseColumns._ID} LIMIT 1")
+        private lateinit var timer: Disposable
 
-        override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
-            super.onSurfaceChanged(holder, format, width, height)
-            Log.d(TAG, "${Thread.currentThread()} onSurfaceChanged() called with: holder = [ $holder ], format = [ $format ], width = [ $width ], height = [ $height ]")
+        init {
+            loader.registerListener(1, this)
+            loader.startLoading()
         }
 
-        override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
-            super.onSurfaceDestroyed(holder)
-            Log.d(TAG, "onSurfaceDestroyed() called with: holder = [ $holder ]")
+        override fun onLoadComplete(loader: Loader<Cursor>, data: Cursor?) {
+            Log.d(TAG, "onLoadComplete() called with: loader = [ ${loader.id} ], data = [ ${data?.count}, ${Arrays.toString(data?.columnNames)} ]")
+            if (data != null && data.count > 0) {
+                data.moveToNext()
+                val photoId = data.getLong(0)
+                val aspect = data.getFloat(1)
+                data.close()
+                loader.unregisterListener(this)
+                loader.stopLoading()
+                startDrawPaper(photoId, aspect)
+                refreshWallpaper()
+            }
         }
+
+        private fun startDrawPaper(photoId: Long, aspect: Float) {
+            myRender.picPath = "${prefs().photosCachePath}/$photoId"
+        }
+
+        private fun refreshWallpaper() {
+            timer = Observable.timer(prefs().updateInterval, TimeUnit.SECONDS).subscribe {
+                val unusedPhotos = ResolverHelper.INSTANCE.getUnusedPhotos(1)
+                unusedPhotos.use { cur ->
+                    cur.moveToNext()
+                    val id = cur.getLong(cur.getColumnIndex(PaperInfoColumns.PHOTO_ID))
+                    val aspect = cur.getFloat(cur.getColumnIndexOrThrow(PaperInfoColumns.ASPECT_RATIO))
+                    startDrawPaper(id, aspect)
+                }
+                refreshWallpaper()
+            }
+        }
+
+        override fun onDestroy() {
+            super.onDestroy()
+            if (loader.isStarted) {
+                loader.unregisterListener(this)
+                loader.stopLoading()
+            }
+            if (::timer.isInitialized && !timer.isDisposed) timer.dispose()
+        }
+
     }
 }

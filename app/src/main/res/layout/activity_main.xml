@@ -14,8 +14,14 @@
         android:id="@+id/toggle"
         android:textOff="OFF"
         android:textOn="ON"
-        android:checked="true"
+        android:checked="false"
         app:layout_constraintLeft_toRightOf="@+id/btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/mock"
+        android:text="mock"
+        app:layout_constraintLeft_toRightOf="@+id/toggle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <ImageView

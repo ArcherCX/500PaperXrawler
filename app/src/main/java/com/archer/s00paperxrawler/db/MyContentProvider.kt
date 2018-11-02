@@ -8,9 +8,12 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.text.TextUtils
+import android.util.Log
 import com.archer.s00paperxrawler.BuildConfig
 
 private typealias Segment = PaperInfoContract.PathSegment
+
+private const val TAG = "MyContentProvider"
 
 class MyContentProvider : ContentProvider() {
 
@@ -41,7 +44,10 @@ class MyContentProvider : ContentProvider() {
                        selectionArgs: Array<String>?, sortOrder: String?): Cursor? {
         val db = getReadableDB()
         when (uriMatcher.match(uri)) {
-            pairUnusedPhotos.second -> return db.query(VIEWS.VIEW_UNUSED_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
+            pairUnusedPhotos.second -> {
+                return db.query(VIEWS.VIEW_UNUSED_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
+                        .apply { setNotificationUri(context.contentResolver, PaperInfoContract.UNUSED_PHOTOS_URI) }
+            }
             pairUndownloadPhotos.second -> return db.query(VIEWS.VIEW_UNDOWNLOAD_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
         }
         return null
@@ -52,6 +58,7 @@ class MyContentProvider : ContentProvider() {
         var id = 0L
         when (uriMatcher.match(uri)) {
             pairPaperInfo.second -> id = db.insertWithOnConflict(TABLES.PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+
         }
         if (id < 0) {
             return null
@@ -64,9 +71,12 @@ class MyContentProvider : ContentProvider() {
         val db = getWritableDB()
         var effect = 0
         when (uriMatcher.match(uri)) {
-            pairPaperInfo.second -> {
+            pairUndownloadPhotos.second -> {
                 effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
+                context.contentResolver.notifyChange(PaperInfoContract.UNUSED_PHOTOS_URI, null)
             }
+            pairUnusedPhotos.second -> effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
+
         }
         return effect
     }

@@ -5,8 +5,17 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.webkit.CookieManager
+import android.webkit.WebView
+import com.archer.s00paperxrawler.service.okClient
+import com.archer.s00paperxrawler.utils.getLegacyApiUri
+import com.archer.s00paperxrawler.utils.getLoadUri
 import com.archer.s00paperxrawler.utils.prefs
+import io.reactivex.Observable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import okhttp3.Request
+import java.io.BufferedReader
 import java.io.File
 
 private const val TAG = "MainActivity"
@@ -19,6 +28,9 @@ class MainActivity : AppCompatActivity() {
         val dir = File(prefs().photosCachePath)
         val files = dir.listFiles()
         var idx = 0
+        mock.setOnClickListener {
+            Log.i(TAG, "onCreate: ${prefs().screenAspectRatio}")
+        }
         btn.setOnClickListener {
             if (idx >= files.size) idx = 0
             if (preview.drawable is BitmapDrawable) {

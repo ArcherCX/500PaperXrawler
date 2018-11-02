@@ -83,11 +83,12 @@ class StrategyFor500 : ICrawlStrategy {
         Log.d(TAG, "getInfoFromDetailHtml: $json")
         try {
             JSONObject(json).run { optJSONObject("photo") }?.apply {
-                val id = optInt("id", -1)
+                val id = optLong("id", -1)
                 val name = optString("name")
                 val url = optJSONArray("images")?.let {
                     val last = it.getJSONObject(it.length() - 1)
-                    if (last.getInt("size") == 2048) return@let last.optString("url", null) ?: last.getString("https_url")
+                    if (last.getInt("size") == 2048) return@let last.optString("url", null)
+                            ?: last.getString("https_url")
                     var maxSize = 0
                     var url = ""
                     for (i in 0..it.length()) {
@@ -99,22 +100,16 @@ class StrategyFor500 : ICrawlStrategy {
                         }
                     }
                     return@let url
-                }.let {
-                    if (!TextUtils.isEmpty(it)) return@let it!!.replace("\\", "")
-                    return@let ""
-                }
+                } ?: ""
                 val ph = optJSONObject("user")?.run {
                     var ph = "${optString("firstname")} ${optString("lastname")}"
                     if (TextUtils.isEmpty(ph.trim())) ph = optString("username")
                     return@run ph
-                }.let {
-                    if (!TextUtils.isEmpty(it)) return@let it!!
-                    return@let ""
-                }
+                } ?: ""
                 val w = optInt("width", -1)
                 val h = optInt("height", -1)
                 val aspect = if (w > 0 && h > 0) w.toFloat() / h else -1F
-                ResolverHelper.INSTANCE.addPhotoInfo(detailUrl,id, name, url, ph, aspect)
+                ResolverHelper.INSTANCE.addPhotoInfo(detailUrl, id, name, url, ph, aspect)
                 DownloadService.startPhotosDownload()
             }
         } catch (e: JSONException) {
