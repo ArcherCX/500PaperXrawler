@@ -8,7 +8,6 @@ import com.archer.s00paperxrawler.gl.GLPic
 import com.archer.s00paperxrawler.gl.GLRenderer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import kotlin.math.roundToInt
 
 private const val TAG = "MyRender"
 
@@ -52,6 +51,6 @@ class MyRenderer : GLRenderer {
     }
 
     override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
-        pic.setXOffset(xOffset)
+        pic.setXOffset(xOffset, xOffsetStep)
     }
 }

@@ -7,6 +7,7 @@ import android.util.Log
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
+import kotlin.math.roundToInt
 
 private const val TAG = "GLPic"
 
@@ -26,6 +27,8 @@ class GLPic : Shape() {
     private var xOffset = 0F
     /**纹理应展示的图片宽度，该宽度基于纹理坐标系计算*/
     private var textureWidth = 1f
+    /**纹理滑动偏移量范围*/
+    private var textureOffsetRange = 0f
     override var viewRatio: Float = 1f
         set(value) {
             field = value
@@ -47,6 +50,7 @@ class GLPic : Shape() {
      */
     private fun calTextureWidth() {
         textureWidth = viewRatio / bmpRatio
+        textureOffsetRange = 1 - textureWidth
     }
 
     /**获取图片绘制坐标缓冲*/
@@ -60,8 +64,17 @@ class GLPic : Shape() {
         )
     }
 
-    fun setXOffset(x: Float) {
-        xOffset = (1 - textureWidth) * x
+    fun setXOffset(xOffset: Float, xOffsetStep: Float) {
+        val additionalScreenNum = (1 / xOffsetStep).roundToInt()//额外的屏幕数量
+        val additionalTextureWidth = additionalScreenNum * textureWidth
+        val textureOffsetRange: Float
+        if ((additionalTextureWidth + textureWidth) < 1) {//所有屏幕数量也不足以展示完整图片，则只展示可展示部分
+            textureOffsetRange = additionalTextureWidth
+            this.xOffset = textureOffsetRange * xOffset
+        } else {
+            textureOffsetRange = this.textureOffsetRange
+            this.xOffset = textureOffsetRange * xOffset
+        }
         setPosBuffer()
     }
 
