@@ -65,6 +65,7 @@ class GLPic : Shape() {
     }
 
     fun setXOffset(xOffset: Float, xOffsetStep: Float) {
+        if (xOffsetStep == 0f) return//初始化WallpaperService时，Engine的onOffsetsChanged回调存在所有参数为0的情况，直接略过
         val additionalScreenNum = (1 / xOffsetStep).roundToInt()//额外的屏幕数量
         val additionalTextureWidth = additionalScreenNum * textureWidth
         val textureOffsetRange: Float
@@ -114,6 +115,9 @@ class GLPic : Shape() {
         glGetUniformLocation(programHandle, glsl_uMatrix).also {
             glUniformMatrix4fv(it, 1, false, uMVPMatrix, 0)
         }
+        /*当GLThread.guardRun()执行完后，进入新一轮的循环时，如果没有参数变化，则posBuffer的position依然会停留在
+        * 上一轮绘制结束时的位置[2]上，导致此轮绘制的图片不在正常位置上，所以每次进入重新置位*/
+        posBuffer.position(0)
         glGetAttribLocation(programHandle, glsl_aPos).also {
             glVertexAttribPointer(it, 2, GL_FLOAT, false, 16, posBuffer)
             glEnableVertexAttribArray(it)
