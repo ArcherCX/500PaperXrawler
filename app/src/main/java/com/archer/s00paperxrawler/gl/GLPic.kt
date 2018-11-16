@@ -32,15 +32,24 @@ class GLPic : Shape() {
     override var viewRatio: Float = 1f
         set(value) {
             field = value
-            calTextureWidth()
+            adjustPosBuffer()
         }
 
     /**要加载的图片宽高比*/
     private var bmpRatio = 1f
         set(value) {
             field = value
-            calTextureWidth()
+            adjustPosBuffer()
         }
+
+    /**
+     * [bmpRatio]和[viewRatio]的变化会导致[textureWidth]、[textureOffsetRange]、[posBuffer]都产生变化，
+     * 在此统一调整
+     */
+    private fun adjustPosBuffer() {
+        calTextureWidth()
+        setPosBuffer()
+    }
 
     /**
      * 设图片宽高为bw、bh，可展示区域宽高为sw、sh，纹理宽高为tw、th，则[bmpRatio]=bw/bh，[viewRatio]=sw/sh，
@@ -54,7 +63,7 @@ class GLPic : Shape() {
     }
 
     /**获取图片绘制坐标缓冲*/
-    private fun getPosBuffer(): FloatArray {
+    private fun getPosArray(): FloatArray {
         return floatArrayOf(
                 //x,y,s,t
                 -viewRatio, 1f, xOffset, 0f,
@@ -82,7 +91,7 @@ class GLPic : Shape() {
     /**设置图片绘制坐标缓冲*/
     private fun setPosBuffer(buffer: FloatBuffer = posBuffer) {
         buffer.clear()
-        buffer.put(getPosBuffer())
+        buffer.put(getPosArray())
         buffer.position(0)
     }
 

@@ -162,7 +162,8 @@ class LiveWallService : OpenGLES2WallpaperService() {
         }
 
         private fun startDrawPaper(photoId: Long, aspect: Float) {
-            myRender.picPath = "${prefs().photosCachePath}/$photoId"
+            queueEvent { myRender.picPath = "${prefs().photosCachePath}/$photoId" }
+            requestRender()
         }
 
         private fun refreshWallpaper() {
