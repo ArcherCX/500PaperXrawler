@@ -721,6 +721,7 @@ class GLThread extends Thread {
             synchronized (sGLThreadManager) {
                 stopEglLocked();
                 mEglHelper.finish();
+                mRenderer.onDestroy();
             }
         }
     }

@@ -7,4 +7,6 @@ import android.opengl.GLSurfaceView
  */
 interface GLRenderer : GLSurfaceView.Renderer {
     fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int)
+
+    fun onDestroy()
 }

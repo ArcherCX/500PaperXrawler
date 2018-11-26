@@ -47,10 +47,15 @@ class MyRenderer : GLRenderer {
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig?) {
         Log.d(TAG, "onSurfaceCreated() called with: version = ${GLES20.glGetString(GLES20.GL_VERSION)}, gl = [ $gl ], config = [ $config ]")
         GLES20.glClearColor(1f, 0f, 0f, 1f)
+        if (::pic.isInitialized) pic.onDestroy()
         pic = GLPic().apply { if (!TextUtils.isEmpty(picPath)) loadBitmap(picPath) }
     }
 
     override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
         pic.setXOffset(xOffset, xOffsetStep)
+    }
+
+    override fun onDestroy() {
+        pic.onDestroy()
     }
 }

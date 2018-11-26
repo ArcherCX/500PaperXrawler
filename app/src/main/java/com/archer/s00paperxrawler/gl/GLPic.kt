@@ -15,7 +15,6 @@ private const val TAG = "GLPic"
  * Created by Chen Xin on 2018/10/22.
  */
 class GLPic : Shape() {
-    private var textureName = 0
     private val posBuffer by lazy {
         Log.d(TAG, "null() called")
         ByteBuffer.allocateDirect(16 * 4)
@@ -41,6 +40,9 @@ class GLPic : Shape() {
             field = value
             adjustPosBuffer()
         }
+
+    /**Texture handle数组*/
+    private val textures = IntArray(1)
 
     /**
      * [bmpRatio]和[viewRatio]的变化会导致[textureWidth]、[textureOffsetRange]、[posBuffer]都产生变化，
@@ -78,13 +80,12 @@ class GLPic : Shape() {
         val additionalScreenNum = (1 / xOffsetStep).roundToInt()//额外的屏幕数量
         val additionalTextureWidth = additionalScreenNum * textureWidth
         val textureOffsetRange: Float
-        if ((additionalTextureWidth + textureWidth) < 1) {//所有屏幕数量也不足以展示完整图片，则只展示可展示部分
-            textureOffsetRange = additionalTextureWidth
-            this.xOffset = textureOffsetRange * xOffset
+        textureOffsetRange = if ((additionalTextureWidth + textureWidth) < 1) {//所有屏幕数量也不足以展示完整图片，则只展示可展示部分
+            additionalTextureWidth
         } else {
-            textureOffsetRange = this.textureOffsetRange
-            this.xOffset = textureOffsetRange * xOffset
+            this.textureOffsetRange
         }
+        this.xOffset = textureOffsetRange * xOffset
         setPosBuffer()
     }
 
@@ -120,7 +121,7 @@ class GLPic : Shape() {
 
     override fun bindData(uMVPMatrix: FloatArray) {
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, textureName)
+        glBindTexture(GL_TEXTURE_2D, textures[0])
         glGetUniformLocation(programHandle, glsl_uMatrix).also {
             glUniformMatrix4fv(it, 1, false, uMVPMatrix, 0)
         }
@@ -142,17 +143,24 @@ class GLPic : Shape() {
     }
 
     override fun doRealDraw(uMVPMatrix: FloatArray) {
-        Log.d(TAG, "doRealDraw() called with: uMVPMatrix = [ ${uMVPMatrix.joinToString()} ]")
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices)
+    }
+
+    /**清理Texture*/
+    private fun destroyTexture() {
+        if (textures[0] != 0) {
+            glDeleteTextures(1, textures, 0)
+            textures[0] = 0
+        }
     }
 
     fun loadBitmap(path: String) {
         val bitmap = BitmapFactory.decodeFile(path)
         if (bitmap == null) {
-            textureName = 0
+            textures[0] = 0
             return
         }
-        val textures = IntArray(1)
+        destroyTexture()
         glGenTextures(1, textures, 0)
         glBindTexture(GL_TEXTURE_2D, textures[0])
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
@@ -162,6 +170,10 @@ class GLPic : Shape() {
         bmpRatio = bitmap.width / bitmap.height.toFloat()
         bitmap.recycle()
         glBindTexture(GL_TEXTURE_2D, 0)
-        textureName = textures[0]
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        destroyTexture()
     }
 }

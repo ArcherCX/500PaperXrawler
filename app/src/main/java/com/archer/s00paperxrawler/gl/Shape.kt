@@ -37,13 +37,16 @@ abstract class Shape {
             glAttachShader(it, vtxHandle)
             glAttachShader(it, fragmentHandle)
             glLinkProgram(it)
+            //link完成即可detach 和 delete shader
+            glDetachShader(it, vtxHandle)
+            glDeleteShader(vtxHandle)
+            glDetachShader(it, fragmentHandle)
+            glDeleteShader(fragmentHandle)
             val linkRet = IntArray(1)
             glGetProgramiv(it, GL_LINK_STATUS, linkRet, 0)
             val ret = linkRet[0] == GL_TRUE
             Log.i(TAG, "init() called program link ret: $ret")
             if (!ret) {
-                glDeleteShader(vtxHandle)
-                glDeleteShader(fragmentHandle)
                 glDeleteProgram(it)
             }
         }
@@ -88,5 +91,9 @@ abstract class Shape {
         glUseProgram(programHandle)
         bindData(uMVPMatrix)
         doRealDraw(uMVPMatrix)
+    }
+
+    open fun onDestroy() {
+        glDeleteProgram(programHandle)
     }
 }
