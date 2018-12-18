@@ -57,7 +57,7 @@ class MyContentProvider : ContentProvider() {
         val db = getWritableDB()
         var id = 0L
         when (uriMatcher.match(uri)) {
-            pairPaperInfo.second -> id = db.insertWithOnConflict(TABLES.PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+            pairPaperInfo.second -> id = db.insertWithOnConflict(TABLES.TABLE_PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
 
         }
         if (id < 0) {
@@ -72,10 +72,10 @@ class MyContentProvider : ContentProvider() {
         var effect = 0
         when (uriMatcher.match(uri)) {
             pairUndownloadPhotos.second -> {
-                effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
+                effect = db.update(TABLES.TABLE_PAPER_INFO, values, selection, selectionArgs)
                 context.contentResolver.notifyChange(PaperInfoContract.UNUSED_PHOTOS_URI, null)
             }
-            pairUnusedPhotos.second -> effect = db.update(TABLES.PAPER_INFO, values, selection, selectionArgs)
+            pairUnusedPhotos.second -> effect = db.update(TABLES.TABLE_PAPER_INFO, values, selection, selectionArgs)
 
         }
         return effect

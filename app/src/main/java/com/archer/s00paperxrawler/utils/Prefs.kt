@@ -34,19 +34,25 @@ enum class Prefs {
 
     var feature: String
         get() = pref.getString("feature", "popular")
-        set(value) = pref.edit().putString("feature", value).apply()
+        set(value) {
+            pref.edit().putString("feature", value).apply()
+            currentPage = 1
+        }
 
     var categories: String
-        get() = pref.getString("categories", "/")
-        set(value) = pref.edit().putString("categories", value).apply()
+        get() = pref.getString("categories", "people")
+        set(value) {
+            pref.edit().putString("categories", value).apply()
+            currentPage = 1
+        }
 
     var minCacheSize: Int
-        get() = pref.getInt("min_cache_size", 1)
-        set(value) = pref.edit().putInt("min_cache_size", value).apply()
+        get() = pref.getInt("min_cache_size", 2)
+        set(value) = pref.edit().putInt("min_cache_size", if (value < 2) 2 else value).apply()
 
     var maxCacheSize: Int
-        get() = pref.getInt("max_cache_size", 3)
-        set(value) = pref.edit().putInt("max_cache_size", value).apply()
+        get() = pref.getInt("max_cache_size", 5)
+        set(value) = pref.edit().putInt("max_cache_size", if (value < 5) 5 else value).apply()
 
     var photosCachePath: String
         get() {
@@ -89,4 +95,9 @@ enum class Prefs {
             return aspect
         }
         set(_) {}
+
+    /**当前要查询的图片所在页数，每天重置*/
+    var currentPage: Int
+        get() = pref.getInt("current_page", 1)
+        set(value) = pref.edit().putInt("current_page", if (value < 1) 1 else value).apply()
 }

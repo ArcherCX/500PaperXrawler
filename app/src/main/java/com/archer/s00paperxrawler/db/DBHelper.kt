@@ -4,10 +4,11 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.provider.BaseColumns
 import com.archer.s00paperxrawler.MyApp
+import com.archer.s00paperxrawler.db.PaperInfoContract.DB_VALUE_CONSTANT.*
 
 typealias PaperInfoColumns = PaperInfoContract.Columns
-typealias TABLES = TableViews.TABLES
-typealias VIEWS = TableViews.VIEWS
+typealias TABLES = PaperInfoContract.Tables
+typealias VIEWS = PaperInfoContract.Views
 
 private const val DB_NAME = "paper_info.db"
 private const val DB_VERSION = 1
@@ -31,7 +32,7 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
 
     companion object {
         private const val SQL_CREATE_PAPER_INFO_TABLE =
-                "CREATE TABLE IF NOT EXISTS ${TABLES.PAPER_INFO} (" +
+                "CREATE TABLE IF NOT EXISTS ${TABLES.TABLE_PAPER_INFO} (" +
                         "${BaseColumns._ID}                     INTEGER PRIMARY KEY," +
                         "${PaperInfoColumns.PHOTO_DETAIL_URL}   VARCHAR(200) UNIQUE," +
                         "${PaperInfoColumns.ASPECT_RATIO}       REAL," +
@@ -40,8 +41,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.PHOTO_ID}           INTEGER," +
                         "${PaperInfoColumns.PH}                 VARCHAR(50)," +
 //                        "${PaperInfoColumns.FILE_NAME}          VARCHAR(20)," +
-                        "${PaperInfoColumns.USED}               INTEGER DEFAULT 0," +
-                        "${PaperInfoColumns.DOWNLOAD}           INTEGER DEFAULT 0," +
+                        "${PaperInfoColumns.USED}               INTEGER DEFAULT $FALSE," +
+                        "${PaperInfoColumns.DOWNLOAD}           INTEGER DEFAULT $FALSE," +
                         "${PaperInfoColumns.SETTLED_DATE}       INTEGER)" +
                         ";"
 
@@ -52,8 +53,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.ASPECT_RATIO}, " +
                         "${PaperInfoColumns.PHOTO_ID}, " +
                         "${PaperInfoColumns.PHOTO_URL} " +
-                        "FROM ${TABLES.PAPER_INFO} " +
-                        "WHERE ${PaperInfoColumns.USED} == 0 AND ${PaperInfoColumns.DOWNLOAD} == 1"
+                        "FROM ${TABLES.TABLE_PAPER_INFO} " +
+                        "WHERE ${PaperInfoColumns.USED} == $FALSE AND ${PaperInfoColumns.DOWNLOAD} == $TRUE"
 
         private const val SQL_CREATE_HISTORY_VIEW =
                 "CREATE VIEW IF NOT EXISTS ${VIEWS.VIEW_HISTORY} AS SELECT " +
@@ -64,8 +65,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.PH}, " +
                         "${PaperInfoColumns.PHOTO_ID}, " +
                         "${PaperInfoColumns.PHOTO_NAME} " +
-                        "FROM ${TABLES.PAPER_INFO} " +
-                        "WHERE ${PaperInfoColumns.USED} == 1 " +
+                        "FROM ${TABLES.TABLE_PAPER_INFO} " +
+                        "WHERE ${PaperInfoColumns.USED} == $TRUE " +
                         "ORDER BY ${PaperInfoColumns.SETTLED_DATE} DESC"
 
         private const val SQL_CREATE_UNDOWNLOAD_PHOTOS_VIEW =
@@ -73,8 +74,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${BaseColumns._ID}, " +
                         "${PaperInfoColumns.PHOTO_URL}," +
                         "${PaperInfoColumns.PHOTO_ID} " +
-                        "FROM ${TABLES.PAPER_INFO} " +
-                        "WHERE ${PaperInfoColumns.DOWNLOAD} == 0"
+                        "FROM ${TABLES.TABLE_PAPER_INFO} " +
+                        "WHERE ${PaperInfoColumns.DOWNLOAD} == $FALSE"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {

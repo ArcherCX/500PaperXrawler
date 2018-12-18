@@ -10,22 +10,29 @@ import com.archer.s00paperxrawler.utils.Prefs;
  * PaperInfo表的Contract
  */
 public interface PaperInfoContract {
-    /**
-     * 照片详情表
-     */
-    String TABLE_NAME = "paper_info";
-    /**
-     * 已下载到本地但未使用照片的详情View
-     */
-    String VIEW_UNUSED_PHOTOS = "view_unused_photos";
-    /**
-     * 未下载到本地照片的详情View
-     */
-    String VIEW_UNDOWNLOAD_PHOTOS = "view_undownload_photos";
-    /**
-     * 曾经被设置为壁纸的照片的详情View，可能已被删除
-     */
-    String VIEW_HISTORY = "view_history";
+
+    interface Tables {
+        /**
+         * 照片详情表
+         */
+        String TABLE_PAPER_INFO = "paper_info";
+    }
+
+    interface Views {
+        /**
+         * 已下载到本地但未使用照片的详情View
+         */
+        String VIEW_UNUSED_PHOTOS = "view_unused_photos";
+        /**
+         * 未下载到本地照片的详情View
+         */
+        String VIEW_UNDOWNLOAD_PHOTOS = "view_undownload_photos";
+        /**
+         * 曾经被设置为壁纸的照片的详情View，可能已被删除
+         */
+        String VIEW_HISTORY = "view_history";
+    }
+
     Uri AUTHORITY_URI = Uri.parse("content://" + BuildConfig.CONTENT_PROVIDER_AUTHORITY);
     /**
      * 照片信息相关
@@ -55,12 +62,20 @@ public interface PaperInfoContract {
         String PHOTO_DETAIL_URL = "photo_detail_url";//照片详情页url
         String ASPECT_RATIO = "aspect_ratio";//图片宽高比
         String PHOTO_URL = "photo_url";//图片url
-        String USED = "used";//是否使用
+        /**是否使用,0:未使用,1:使用*/
+        String USED = "used";
         String SETTLED_DATE = "settled_date";//设置为壁纸的日期
         String PH = "ph";//摄影
         String PHOTO_NAME = "photo_name";//照片名字
-        String DOWNLOAD = "download";//是否下载
+        /**是否下载,0:未下载,1:下载,-1:无法下载:*/
+        String DOWNLOAD = "download";
         String PHOTO_ID = "photo_id";//图片id
+    }
+
+    interface DB_VALUE_CONSTANT {
+        int FALSE = 0;
+        int TRUE = 1;
+        int EXCEPTION = -1;
     }
 
     interface PathSegment {
