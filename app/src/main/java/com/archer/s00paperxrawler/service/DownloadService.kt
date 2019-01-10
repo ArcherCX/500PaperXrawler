@@ -11,6 +11,9 @@ import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.utils.getLegacyApiUri
 import com.archer.s00paperxrawler.utils.getLoadUri
 import com.archer.s00paperxrawler.utils.prefs
+import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.franmontiel.persistentcookiejar.cache.SetCookieCache
+import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.schedulers.Schedulers
@@ -25,22 +28,7 @@ private const val TAG = "DownloadService"
 val okClient: OkHttpClient =
         OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
-                .cookieJar(object : CookieJar {
-                    private val cookieMap = mutableMapOf<String, MutableList<Cookie>>()
-                    override fun saveFromResponse(url: HttpUrl, cookies: MutableList<Cookie>) {
-//                        Log.d(TAG, "saveFromResponse() called with: url = [ $url ], cookies = [ $cookies ]")
-                        cookieMap[url.host()] = cookies
-                    }
-
-                    override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
-                        val host = url.host()
-//                        Log.i(TAG, "loadForRequest() called with: host = $host , url = [ $url ]")
-                        return when (host) {
-                            "api.500px.com" -> cookieMap["500px.com"] ?: mutableListOf()
-                            else -> cookieMap[host] ?: mutableListOf()
-                        }
-                    }
-                })
+                .cookieJar(PersistentCookieJar(SetCookieCache(),SharedPrefsCookiePersistor(MyApp.AppCtx)))
                 .build()
 
 /**下载时异常*/
@@ -53,10 +41,7 @@ class DownloadService : IntentService("DownloadService") {
 
     override fun onHandleIntent(intent: Intent?) {
         when (intent?.action) {
-            ACTION_LOAD_PHOTOS_URL -> {
-                Log.w(TAG, "handleLoadPhotosUrl() called from IntentService Action")
-                handleLoadPhotosUrl()
-            }
+            ACTION_LOAD_PHOTOS_URL -> handleLoadPhotosUrl()
             ACTION_PHOTOS_DOWNLOAD -> handlePhotosDownload()
         }
     }
@@ -117,7 +102,7 @@ class DownloadService : IntentService("DownloadService") {
             if (ResolverHelper.INSTANCE.shouldLoadMoreInfo()) {
                 handleLoadPhotosUrl()
             } else {
-                prefs().isCacheEnough = true
+                prefs().isCacheEnough = ResolverHelper.INSTANCE.isCacheEnough()
             }
         })
     }
@@ -207,13 +192,13 @@ class DownloadService : IntentService("DownloadService") {
         private const val ACTION_LOAD_PHOTOS_URL = "com.archer.s00paperxrawler.service.action.LOAD_PHOTOS_URL"
         private const val ACTION_PHOTOS_DOWNLOAD = "com.archer.s00paperxrawler.service.action.PHOTOS_DOWNLOAD"
 
-        /**下载照片*/
+        /**下载照片, impl:[handlePhotosDownload]*/
         @JvmStatic
         fun startPhotosDownload() {
             startIntentService(ACTION_PHOTOS_DOWNLOAD)
         }
 
-        /**从500px加载照片信息*/
+        /**从500px加载照片信息, impl:[handleLoadPhotosUrl]*/
         @JvmStatic
         fun startLoadPhotosUrl() {
             startIntentService(ACTION_LOAD_PHOTOS_URL)

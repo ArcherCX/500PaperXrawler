@@ -49,7 +49,7 @@ enum class ResolverHelper {
      * 缓存的图片是否足够
      * @param unusedPhotos 当前的有效缓存图片数量
      */
-    private fun isCacheEnough(unusedPhotos: Int = getUnusedPhotos().use { it.count }): Boolean = unusedPhotos >= prefs().minCacheSize
+    fun isCacheEnough(unusedPhotos: Int = getUnusedPhotos().use { it.count }): Boolean = unusedPhotos >= prefs().minCacheSize
 
     /**
      * 是否应该加载更多图片信息到本地：已缓存的图片数量小于最小缓存数量，即缓存不足，且可下载的图片信息小于最大可缓存数量与已缓存图片的差值
