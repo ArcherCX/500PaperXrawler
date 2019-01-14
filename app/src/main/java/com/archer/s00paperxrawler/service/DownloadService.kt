@@ -16,11 +16,11 @@ import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
-import io.reactivex.schedulers.Schedulers
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONObject
 import java.io.File
-import java.lang.RuntimeException
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "DownloadService"
@@ -51,7 +51,7 @@ class DownloadService : IntentService("DownloadService") {
         if (e is DownloadException) ResolverHelper.INSTANCE.setPhotoDownloaded(e.id, PaperInfoContract.DB_VALUE_CONSTANT.EXCEPTION)
     }
 
-    @SuppressLint("CheckResult")
+    @SuppressLint("CheckResult", "UseValueOf")
     private fun handlePhotosDownload() {
         if (prefs().isCacheEnough) return
         Log.d(TAG, "handlePhotosDownload() called")
@@ -110,6 +110,7 @@ class DownloadService : IntentService("DownloadService") {
     /**加载更多的图片信息*/
     @SuppressLint("CheckResult")
     private fun handleLoadPhotosUrl() {
+        if (!ResolverHelper.INSTANCE.shouldLoadMoreInfo()) return
         Observable.create<String> { emitter: ObservableEmitter<String> ->
             val csrfToken = prefs().csrfToken
             if (TextUtils.isEmpty(csrfToken)) {
