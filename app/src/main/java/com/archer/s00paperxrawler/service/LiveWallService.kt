@@ -2,8 +2,6 @@ package com.archer.s00paperxrawler.service
 
 import android.database.Cursor
 import android.provider.BaseColumns
-import android.support.v4.content.CursorLoader
-import android.support.v4.content.Loader
 import android.util.Log
 import com.archer.s00paperxrawler.db.PaperInfoColumns
 import com.archer.s00paperxrawler.db.PaperInfoContract
@@ -44,8 +42,8 @@ class LiveWallService : OpenGLES2WallpaperService() {
     }
 
 
-    inner class MyEngine : OpenGLES2Engine(), Loader.OnLoadCompleteListener<Cursor> {
-        private val loader: CursorLoader = CursorLoader(this@LiveWallService, PaperInfoContract.UNUSED_PHOTOS_URI, arrayOf(PaperInfoColumns.PHOTO_ID, PaperInfoColumns.ASPECT_RATIO), null, null, "${BaseColumns._ID} LIMIT 1")
+    inner class MyEngine : OpenGLES2Engine(), androidx.loader.content.Loader.OnLoadCompleteListener<Cursor> {
+        private val loader: androidx.loader.content.CursorLoader = androidx.loader.content.CursorLoader(this@LiveWallService, PaperInfoContract.UNUSED_PHOTOS_URI, arrayOf(PaperInfoColumns.PHOTO_ID, PaperInfoColumns.ASPECT_RATIO), null, null, "${BaseColumns._ID} LIMIT 1")
         private lateinit var timer: Disposable
 
         init {
@@ -53,7 +51,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
             loader.startLoading()
         }
 
-        override fun onLoadComplete(loader: Loader<Cursor>, data: Cursor?) {
+        override fun onLoadComplete(loader: androidx.loader.content.Loader<Cursor>, data: Cursor?) {
             Log.d(TAG, "onLoadComplete() called with: loader = [ ${loader.id} ], data = [ ${data?.count}, ${Arrays.toString(data?.columnNames)} ]")
             if (data != null && data.count > 0) {
                 data.moveToNext()

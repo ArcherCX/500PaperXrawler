@@ -3,19 +3,10 @@ package com.archer.s00paperxrawler
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.webkit.CookieManager
-import android.webkit.WebView
-import com.archer.s00paperxrawler.service.okClient
-import com.archer.s00paperxrawler.utils.getLegacyApiUri
-import com.archer.s00paperxrawler.utils.getLoadUri
+import androidx.appcompat.app.AppCompatActivity
 import com.archer.s00paperxrawler.utils.prefs
-import io.reactivex.Observable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
-import okhttp3.Request
-import java.io.BufferedReader
 import java.io.File
 
 private const val TAG = "MainActivity"
