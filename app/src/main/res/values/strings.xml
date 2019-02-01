@@ -1,3 +1,52 @@
+<!DOCTYPE resources [<!ENTITY appName "500PaperXrawler">]>
 <resources>
-    <string name="app_name">500PaperXrawler</string>
+    <string name="app_name" translatable="false">&appName;</string>
+    <string name="setup_wizard_title">Setup Wizard</string>
+    <string name="setup_wizard_msg">To actually use &appName; , You need set &appName; as your Wallpaper in next screen</string>
+    <string name="feature_title">Feature</string>
+    <string name="feature_key" translatable="false">feature</string>
+    <string name="category_title">Category</string>
+    <string name="categories_key" translatable="false">categories</string>
+    <string name="category_title_feature_and_category"><![CDATA[Feature & Category]]></string>
+    <string name="default_category">All Categories</string>
+    <string name="storage_cache_key" translatable="false">storage_cache_key</string>
+    <string name="storage_cache_title">Storage Cache</string>
+    <string name="storage_cache_summary">The maximum number of pictures that can be stored in app</string>
+    <string name="storage_cache_default" translatable="false">128</string>
+    <string name="storage_cache_min" translatable="false">128</string>
+    <string name="storage_cache_max" translatable="false">512</string>
+    <string name="storage_cache_increment" translatable="false">4</string>
+    <string name="refresh_interval_key" translatable="false">refresh_interval</string>
+    <string name="refresh_interval_title">Refresh Interval</string>
+    <string name="refresh_interval_summary">Refresh wallpaper at the specified time intervals, [30 minutes , 1 day] , %.1f hour</string>
+    <string name="settings_title">Settings</string>
+    <string name="refresh_interval_default" translatable="false">1</string>
+    <string name="refresh_interval_min" translatable="false">1</string>
+    <string name="refresh_interval_max" translatable="false">48</string>
+    <string name="misc_title">Misc</string>
+    <string name="download_via_wifi_key" translatable="false">download_via_wifi</string>
+    <string name="download_via_wifi_title">Download only over Wi-Fi</string>
+    <string name="download_via_wifi_summary">Only download new pictures when connected to Wi-Fi</string>
+    <string name="download_via_wifi_default" translatable="false">true</string>
+    <string name="skip_title">Skip</string>
+    <string name="skip_summary">Tap the wallpaper with three fingers to skip this one</string>
+    <string name="open_config_key" translatable="false">open_config</string>
+    <string name="open_config_title">Open Wallpaper Configuration</string>
+    <string name="open_config_summary">Open the wallpaper configuration to set &appName; as your live wallpaper app</string>
+    <string name="clear_cache_key" translatable="false">clear_cache</string>
+    <string name="clear_cache_title">Clear Cache</string>
+    <string name="clear_cache_dialog_msg">Are you sure you are want to delete all cache files and database ? Clear cache will trigger an update of picture , please make sure you are connected to Wi-Fi . Cache Size : %s .</string>
+    <string name="clear_cache_summary">Click to delete cached picture files</string>
+    <string name="clear_history_key" translatable="false">clear_history</string>
+    <string name="clear_history_title">Clear History</string>
+    <string name="clear_history_dialog_msg">Are you sure you are want to clear history? History File Size : %s .</string>
+    <string name="clear_history_summary">Click to clear history db and history files</string>
+    <string name="show_nsfw_key" translatable="false">show_nsfw</string>
+    <string name="show_nsfw_default" translatable="false">false</string>
+    <string name="show_nsfw_title">NSFW</string>
+    <string name="show_nsfw_summary">Whether to show Not Safe For Work wallpaper</string>
+    <string name="feature_category_changed_hint">Changes will not become effective immediately unless you clear the cache , clear cache will trigger an update of picture , please make sure you are connected to Wi-Fi .</string>
+    <string name="hint">Hint</string>
+    <string name="category_conflict_info">Nude category is NSFW , please enable NSFW first.</string>
+    <string name="nsfw_conflict_info">You may not disable NSFW when only select Nude category.</string>
 </resources>

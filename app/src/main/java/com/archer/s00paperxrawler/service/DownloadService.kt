@@ -3,11 +3,14 @@ package com.archer.s00paperxrawler.service
 import android.annotation.SuppressLint
 import android.app.IntentService
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
-import com.archer.s00paperxrawler.MyApp
+import android.widget.Toast
 import com.archer.s00paperxrawler.db.PaperInfoContract
 import com.archer.s00paperxrawler.db.ResolverHelper
+import com.archer.s00paperxrawler.getMyAppCtx
 import com.archer.s00paperxrawler.utils.getLegacyApiUri
 import com.archer.s00paperxrawler.utils.getLoadUri
 import com.archer.s00paperxrawler.utils.prefs
@@ -28,7 +31,7 @@ private const val TAG = "DownloadService"
 val okClient: OkHttpClient =
         OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
-                .cookieJar(PersistentCookieJar(SetCookieCache(),SharedPrefsCookiePersistor(MyApp.AppCtx)))
+                .cookieJar(PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(getMyAppCtx())))
                 .build()
 
 /**下载时异常*/
@@ -110,6 +113,7 @@ class DownloadService : IntentService("DownloadService") {
     /**加载更多的图片信息*/
     @SuppressLint("CheckResult")
     private fun handleLoadPhotosUrl() {
+        Log.d(TAG, "handleLoadPhotosUrl() called start")
         if (!ResolverHelper.INSTANCE.shouldLoadMoreInfo()) return
         Observable.create<String> { emitter: ObservableEmitter<String> ->
             val csrfToken = prefs().csrfToken
@@ -162,7 +166,8 @@ class DownloadService : IntentService("DownloadService") {
                                 val w = photo.optInt("width", -1)
                                 val h = photo.optInt("height", -1)
                                 val aspect = if (w > 0 && h > 0) w.toFloat() / h else -1F
-                                ResolverHelper.INSTANCE.addPhotoInfo(detailUrl, photoId, photoName, photoURL, ph, aspect)
+                                val nsfw = photo.optBoolean("nsfw", true)
+                                ResolverHelper.INSTANCE.addPhotoInfo(detailUrl, photoId, photoName, photoURL, ph, aspect, nsfw)
                                 DownloadService.startPhotosDownload()
                             }
                         } else {
@@ -182,10 +187,11 @@ class DownloadService : IntentService("DownloadService") {
                 }
             }
         }.retry(3).subscribe({}, {
-            Log.e(TAG, "startLoadInfo: onError", it)
+            it.printStackTrace()
+            Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Exception occurred while getting photo url , ${it.message}", Toast.LENGTH_LONG).show() }
         }, {
             prefs().currentPage++
-            Log.i(TAG, "handleLoadPhotosUrl: currentpage = ${prefs().currentPage}")
+            Log.i(TAG, "handleLoadPhotosUrl onComplete: currentpage = ${prefs().currentPage}")
         })
     }
 
@@ -205,11 +211,30 @@ class DownloadService : IntentService("DownloadService") {
             startIntentService(ACTION_LOAD_PHOTOS_URL)
         }
 
+        /**开始等待中的下载任务*/
+        @JvmStatic
+        fun startPendingDownloadAction() {
+            val pendingDownloadAction: MutableSet<String>
+            synchronized(Companion::class.java) {
+                pendingDownloadAction = prefs().pendingDownloadAction
+                prefs().pendingDownloadAction = mutableSetOf()
+            }
+            for (action in pendingDownloadAction) {
+                startIntentService(action)
+            }
+        }
+
         @JvmStatic
         private fun startIntentService(action: String) {
-            val context = MyApp.AppCtx
-            val intent = Intent(context, DownloadService::class.java).apply { this.action = action }
-            context.startService(intent)
+            val prefs = prefs()
+            val downloadViaWifi = prefs.downloadViaWifi
+            if (!downloadViaWifi || downloadViaWifi && prefs.wifiAvailable) {
+                val context = getMyAppCtx()
+                val intent = Intent(context, DownloadService::class.java).apply { this.action = action }
+                context.startService(intent)
+            } else {
+                prefs.pendingDownloadAction = prefs.pendingDownloadAction.apply { add(action) }
+            }
         }
     }
 }

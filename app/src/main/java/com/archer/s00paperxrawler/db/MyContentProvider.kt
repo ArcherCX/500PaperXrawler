@@ -7,11 +7,10 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
-import android.text.TextUtils
-import android.util.Log
 import com.archer.s00paperxrawler.BuildConfig
 
 private typealias Segment = PaperInfoContract.PathSegment
+private typealias DB_CONSTANT = PaperInfoContract.DB_VALUE_CONSTANT
 
 private const val TAG = "MyContentProvider"
 
@@ -22,6 +21,7 @@ class MyContentProvider : ContentProvider() {
         private val pairUnusedPhotos = Pair(Segment.UNUSED_PHOTOS, 0)
         private val pairUndownloadPhotos = Pair(Segment.UNDOWNLOAD_PHOTOS, 1)
         private val pairPaperInfo = Pair(Segment.PAPER_INFO, 2)
+        private val pairHistory = Pair(Segment.PAPER_HISTORY, 3)
 
         private fun UriMatcher.addURI(vararg pairs: Pair<String, Int>) {
             for (pair in pairs) {
@@ -33,7 +33,8 @@ class MyContentProvider : ContentProvider() {
             uriMatcher.addURI(
                     pairUnusedPhotos,
                     pairUndownloadPhotos,
-                    pairPaperInfo
+                    pairPaperInfo,
+                    pairHistory
             )
         }
     }
@@ -44,6 +45,7 @@ class MyContentProvider : ContentProvider() {
                        selectionArgs: Array<String>?, sortOrder: String?): Cursor? {
         val db = getReadableDB()
         when (uriMatcher.match(uri)) {
+            pairPaperInfo.second -> return db.query(TABLES.TABLE_PAPER_INFO, projection, selection, selectionArgs, null, null, sortOrder)
             pairUnusedPhotos.second -> {
                 return db.query(VIEWS.VIEW_UNUSED_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
                         .apply { setNotificationUri(context.contentResolver, PaperInfoContract.UNUSED_PHOTOS_URI) }
@@ -82,7 +84,13 @@ class MyContentProvider : ContentProvider() {
     }
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
-        TODO("Implement this to handle requests to delete one or more rows")
+        val db = getWritableDB()
+        when (uriMatcher.match(uri)) {
+            pairUnusedPhotos.second -> return db.delete(TABLES.TABLE_PAPER_INFO,
+                    "${PaperInfoColumns.USED} == ${DB_CONSTANT.FALSE}", null)
+            pairHistory.second -> return db.delete(TABLES.TABLE_PAPER_INFO, "${PaperInfoColumns.USED} == ${DB_CONSTANT.TRUE}", null)
+        }
+        return 0
     }
 
     override fun getType(uri: Uri): String? {

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="features_entries">
+        <item>Popular</item>
+        <item>Upcoming</item>
+        <item>Fresh</item>
+        <item>Editors</item>
+    </string-array>
+    <string-array name="features_entry_values">
+        <item>popular</item>
+        <item>upcoming</item>
+        <item>fresh</item>
+        <item>editors</item>
+    </string-array>
+    <string name="feature_default" translatable="false">popular</string>
+
+    <string-array name="categories_entries">
+        <item>Abstract</item>
+        <item>Aerial</item>
+        <item>Animals</item>
+        <item>Black and White</item>
+        <!--<item>Boudoir</item>-->
+        <item>Celebrities</item>
+        <item>City &amp; Architecture</item>
+        <item>Commercial</item>
+        <item>Concert</item>
+        <item>Family</item>
+        <item>Fashion</item>
+        <item>Film</item>
+        <item>Fine Art</item>
+        <item>Food</item>
+        <item>Journalism</item>
+        <item>Landscapes</item>
+        <item>Macro</item>
+        <item>Nature</item>
+        <item>Night</item>
+        <item>Nude</item>
+        <item>People</item>
+        <item>Performing Arts</item>
+        <item>Sport</item>
+        <item>Still Life</item>
+        <item>Street</item>
+        <item>Transportation</item>
+        <item>Travel</item>
+        <item>Underwater</item>
+        <item>Urban Exploration</item>
+        <item>Wedding</item>
+        <item>Uncategorized</item>
+    </string-array>
+    <string-array name="categories_entry_values">
+        <item>abstract</item>
+        <item>aerial</item>
+        <item>animals</item>
+        <item>black and white</item>
+        <!--<item>boudoir</item>-->
+        <item>celebrities</item>
+        <item>city &amp; architecture</item>
+        <item>commercial</item>
+        <item>concert</item>
+        <item>family</item>
+        <item>fashion</item>
+        <item>film</item>
+        <item>fine art</item>
+        <item>food</item>
+        <item>journalism</item>
+        <item>landscapes</item>
+        <item>macro</item>
+        <item>nature</item>
+        <item>night</item>
+        <item>nude</item>
+        <item>people</item>
+        <item>performing arts</item>
+        <item>sport</item>
+        <item>still life</item>
+        <item>street</item>
+        <item>transportation</item>
+        <item>travel</item>
+        <item>underwater</item>
+        <item>urban exploration</item>
+        <item>wedding</item>
+        <item>uncategorized</item>
+    </string-array>
+</resources>

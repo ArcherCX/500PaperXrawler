@@ -70,6 +70,7 @@ public interface PaperInfoContract {
         /**是否下载,0:未下载,1:下载,-1:无法下载:*/
         String DOWNLOAD = "download";
         String PHOTO_ID = "photo_id";//图片id
+        String NSFW = "nsfw";//not safe for work
     }
 
     interface DB_VALUE_CONSTANT {

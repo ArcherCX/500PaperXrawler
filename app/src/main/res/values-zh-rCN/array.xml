@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="features_entries">
+        <item>热门</item>
+        <item>排名上升</item>
+        <item>新作</item>
+        <item>编辑推荐</item>
+    </string-array>
+    <string-array name="categories_entries">
+        <item>抽象</item>
+        <item>航拍</item>
+        <item>动物</item>
+        <item>黑白</item>
+        <item>名人</item>
+        <item>建筑</item>
+        <item>商业</item>
+        <item>演唱会</item>
+        <item>生活</item>
+        <item>时尚</item>
+        <item>胶片</item>
+        <item>艺术</item>
+        <item>美食</item>
+        <item>纪实</item>
+        <item>风景</item>
+        <item>微距</item>
+        <item>自然</item>
+        <item>夜景</item>
+        <item>裸体</item>
+        <item>人物</item>
+        <item>表演</item>
+        <item>运动</item>
+        <item>静物</item>
+        <item>街拍</item>
+        <item>交通</item>
+        <item>旅行</item>
+        <item>水下</item>
+        <item>城市</item>
+        <item>婚礼</item>
+        <item>未分类</item>
+    </string-array>
+</resources>

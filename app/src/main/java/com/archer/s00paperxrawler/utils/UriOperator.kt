@@ -10,9 +10,8 @@ import java.net.URLEncoder
 /**获取图片源Uri*/
 fun getLoadUri(): String {
     val pref = prefs()
-    return "${pref.baseUri}/${pref.feature}/${pref.categories.apply {
-        replace(",", "-")
-        replace(" ", "+")
+    return "${pref.baseUri}/${pref.feature}/${pref.categories.let {
+        URLEncoder.encode(it.joinToString("-").replace(" ", "+"), "UTF-8")
     }}"
 }
 
@@ -27,7 +26,7 @@ fun getLegacyApiUri(page: Int): String {
             "&feature=${prefs.feature}" +
             "&image_size[]=2048" +
             "&formats=jpeg" +
-            "&only=${prefs.categories.run { return@run URLEncoder.encode(this, "utf-8") }}" +
+            "&only=${prefs.categories.let { URLEncoder.encode(it.joinToString(",").replace(" ", "+"), "UTF-8") }}" +
             "&page=$ret" +
             "&sort=&include_states=true&include_licensing=true&exclude=&personalized_categories="
 }

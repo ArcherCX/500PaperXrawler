@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/category_title_feature_and_category"
+        app:iconSpaceReserved="false">
+        <ListPreference
+            android:defaultValue="@string/feature_default"
+            android:entries="@array/features_entries"
+            android:entryValues="@array/features_entry_values"
+            android:key="@string/feature_key"
+            android:title="@string/feature_title"
+            app:iconSpaceReserved="false" />
+        <MultiSelectListPreference
+            android:entries="@array/categories_entries"
+            android:entryValues="@array/categories_entry_values"
+            android:key="@string/categories_key"
+            android:title="@string/category_title"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:defaultValue="@string/show_nsfw_default"
+            android:key="@string/show_nsfw_key"
+            android:summary="@string/show_nsfw_summary"
+            android:title="@string/show_nsfw_title"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/settings_title"
+        app:allowDividerAbove="false"
+        app:iconSpaceReserved="false">
+        <com.archer.s00paperxrawler.view.MySeekBarPreference
+            android:defaultValue="@string/refresh_interval_default"
+            android:key="@string/refresh_interval_key"
+            android:max="@string/refresh_interval_max"
+            android:summary="@string/refresh_interval_summary"
+            android:title="@string/refresh_interval_title"
+            app:iconSpaceReserved="false"
+            app:min="@string/refresh_interval_min"
+            app:showSeekBarValue="false" />
+
+        <!-- <com.archer.s00paperxrawler.view.MySeekBarPreference
+             android:defaultValue="@string/storage_cache_default"
+             android:key="@string/storage_cache_key"
+             android:max="@string/storage_cache_max"
+             android:summary="@string/storage_cache_summary"
+             android:title="@string/storage_cache_title"
+             app:iconSpaceReserved="false"
+             app:min="@string/storage_cache_min"
+             app:seekBarIncrement="@string/storage_cache_increment" />-->
+
+        <Preference
+            android:key="@string/open_config_key"
+            android:summary="@string/open_config_summary"
+            android:title="@string/open_config_title"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/misc_title"
+        app:allowDividerAbove="false"
+        app:iconSpaceReserved="false">
+        <SwitchPreference
+            android:defaultValue="@string/download_via_wifi_default"
+            android:key="@string/download_via_wifi_key"
+            android:summary="@string/download_via_wifi_summary"
+            android:title="@string/download_via_wifi_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="@string/clear_cache_key"
+            android:summary="@string/clear_cache_summary"
+            android:title="@string/clear_cache_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="@string/clear_history_key"
+            android:summary="@string/clear_history_summary"
+            android:title="@string/clear_history_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:enabled="false"
+            android:summary="@string/skip_summary"
+            android:title="@string/skip_title"
+            app:allowDividerAbove="true"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,36 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/container"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-    <Button
-        android:id="@+id/btn"
-        android:text="Click"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <ToggleButton
-        android:id="@+id/toggle"
-        android:textOff="OFF"
-        android:textOn="ON"
-        android:checked="false"
-        app:layout_constraintLeft_toRightOf="@+id/btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <Button
-        android:id="@+id/mock"
-        android:text="mock"
-        app:layout_constraintLeft_toRightOf="@+id/toggle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <ImageView
-        android:id="@+id/preview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

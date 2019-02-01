@@ -3,8 +3,9 @@ package com.archer.s00paperxrawler.db
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.provider.BaseColumns
-import com.archer.s00paperxrawler.MyApp
-import com.archer.s00paperxrawler.db.PaperInfoContract.DB_VALUE_CONSTANT.*
+import com.archer.s00paperxrawler.db.PaperInfoContract.DB_VALUE_CONSTANT.FALSE
+import com.archer.s00paperxrawler.db.PaperInfoContract.DB_VALUE_CONSTANT.TRUE
+import com.archer.s00paperxrawler.getMyAppCtx
 
 typealias PaperInfoColumns = PaperInfoContract.Columns
 typealias TABLES = PaperInfoContract.Tables
@@ -25,7 +26,7 @@ fun getReadableDB(): SQLiteDatabase {
  * Created by Chen Xin on 2018/8/15.
  * 数据库操作类
  */
-class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, null, DB_VERSION) {
+class DBHelper private constructor() : SQLiteOpenHelper(getMyAppCtx(), DB_NAME, null, DB_VERSION) {
     object Singleton {
         val instance = DBHelper()
     }
@@ -43,6 +44,7 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
 //                        "${PaperInfoColumns.FILE_NAME}          VARCHAR(20)," +
                         "${PaperInfoColumns.USED}               INTEGER DEFAULT $FALSE," +
                         "${PaperInfoColumns.DOWNLOAD}           INTEGER DEFAULT $FALSE," +
+                        "${PaperInfoColumns.NSFW}               INTEGER DEFAULT $FALSE," +
                         "${PaperInfoColumns.SETTLED_DATE}       INTEGER)" +
                         ";"
 
@@ -52,7 +54,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.PHOTO_DETAIL_URL}," +
                         "${PaperInfoColumns.ASPECT_RATIO}, " +
                         "${PaperInfoColumns.PHOTO_ID}, " +
-                        "${PaperInfoColumns.PHOTO_URL} " +
+                        "${PaperInfoColumns.PHOTO_URL}, " +
+                        "${PaperInfoColumns.NSFW} " +
                         "FROM ${TABLES.TABLE_PAPER_INFO} " +
                         "WHERE ${PaperInfoColumns.USED} == $FALSE AND ${PaperInfoColumns.DOWNLOAD} == $TRUE"
 
@@ -64,6 +67,7 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
                         "${PaperInfoColumns.SETTLED_DATE}," +
                         "${PaperInfoColumns.PH}, " +
                         "${PaperInfoColumns.PHOTO_ID}, " +
+                        "${PaperInfoColumns.NSFW}, " +
                         "${PaperInfoColumns.PHOTO_NAME} " +
                         "FROM ${TABLES.TABLE_PAPER_INFO} " +
                         "WHERE ${PaperInfoColumns.USED} == $TRUE " +
@@ -72,7 +76,8 @@ class DBHelper private constructor() : SQLiteOpenHelper(MyApp.AppCtx, DB_NAME, n
         private const val SQL_CREATE_UNDOWNLOAD_PHOTOS_VIEW =
                 "CREATE VIEW IF NOT EXISTS ${VIEWS.VIEW_UNDOWNLOAD_PHOTOS} AS SELECT " +
                         "${BaseColumns._ID}, " +
-                        "${PaperInfoColumns.PHOTO_URL}," +
+                        "${PaperInfoColumns.PHOTO_URL}, " +
+                        "${PaperInfoColumns.NSFW}, " +
                         "${PaperInfoColumns.PHOTO_ID} " +
                         "FROM ${TABLES.TABLE_PAPER_INFO} " +
                         "WHERE ${PaperInfoColumns.DOWNLOAD} == $FALSE"

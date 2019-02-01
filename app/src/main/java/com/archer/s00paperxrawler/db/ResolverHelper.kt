@@ -6,9 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.BaseColumns
 import android.text.TextUtils
-import android.util.Log
-import com.archer.s00paperxrawler.MyApp
-import com.archer.s00paperxrawler.service.DownloadService
+import com.archer.s00paperxrawler.getMyAppCtx
 import com.archer.s00paperxrawler.utils.prefs
 import io.reactivex.Observable
 import java.io.File
@@ -29,20 +27,28 @@ enum class ResolverHelper {
         return query(uri, projection, selection, selectionArgs, sortOrder)
     }
 
-    private fun getCR(): ContentResolver = MyApp.AppCtx.contentResolver
+    private fun getCR(): ContentResolver = getMyAppCtx().contentResolver
 
+    private fun getDBBoolConstant(boolean: Boolean) = if (boolean) PaperInfoContract.DB_VALUE_CONSTANT.TRUE else PaperInfoContract.DB_VALUE_CONSTANT.FALSE
+
+    fun getNSFWSelection(): String? {
+        val nsfw = prefs().showNSFW
+        return if (nsfw.not()) "${PaperInfoColumns.NSFW} == ${getDBBoolConstant(false)}" else null
+    }
 
     /**获取已下载到本地但未使用的照片*/
     fun getUnusedPhotos(limit: Int = -1): Cursor {
         val sLimit = if (limit > 0) " LIMIT $limit" else ""
-        return getCR().queryAdapter(PaperInfoContract.UNUSED_PHOTOS_URI, sortOrder = "${BaseColumns._ID}$sLimit")
+        return getCR().queryAdapter(PaperInfoContract.UNUSED_PHOTOS_URI,
+                selection = getNSFWSelection(),
+                sortOrder = "${BaseColumns._ID}$sLimit")
     }
 
     /**
      * 未下载的图片信息
      */
     fun getUnDownPhotos(): Cursor {
-        return getCR().queryAdapter(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI)
+        return getCR().queryAdapter(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI, selection = getNSFWSelection())
     }
 
     /**
@@ -77,7 +83,8 @@ enum class ResolverHelper {
                 emitter.onComplete()
             } else {
                 val cursor = getCR().query(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI,
-                        arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_URL, PaperInfoColumns.PHOTO_ID), null, null, "${BaseColumns._ID} LIMIT $limit")
+                        arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_URL, PaperInfoColumns.PHOTO_ID),
+                        getNSFWSelection(), null, "${BaseColumns._ID} LIMIT $limit")
                 cursor.use {
                     while (it.moveToNext()) {
                         emitter.onNext(DownloadInfo(cursor.getInt(0), cursor.getString(1), cursor.getLong(2)))
@@ -96,7 +103,10 @@ enum class ResolverHelper {
 
     /**设置图片为已使用*/
     fun setPhotoUsed(id: Long): Int {
-        prefs().isCacheEnough = isCacheEnough()
+        val prefs = prefs()
+        if (!prefs.isCurrentWallPaper) return 0
+        Runtime.getRuntime().exec("mv ${prefs.photosCachePath}/$id ${prefs.photosHistoryPath}")
+        prefs.isCacheEnough = isCacheEnough()
         val values = ContentValues().apply {
             put(PaperInfoColumns.USED, PaperInfoContract.DB_VALUE_CONSTANT.TRUE)
             put(PaperInfoColumns.SETTLED_DATE, System.currentTimeMillis())
@@ -104,9 +114,11 @@ enum class ResolverHelper {
         return getCR().update(PaperInfoContract.UNUSED_PHOTOS_URI, values, "${PaperInfoColumns.PHOTO_ID} == $id", null)
     }
 
-    /**添加照片信息
-     * @param detailUrl 照片*/
-    fun addPhotoInfo(detailUrl: String, id: Long, name: String, url: String, ph: String, aspect: Float) {
+    /**
+     * 添加照片信息
+     * @param detailUrl 照片
+     */
+    fun addPhotoInfo(detailUrl: String, id: Long, name: String, url: String, ph: String, aspect: Float, nsfw: Boolean) {
 //        Log.d(TAG, "addPhotoInfo() called with: detailUrl = [ $detailUrl ], id = [ $id ], name = [ $name ], url = [ $url ], ph = [ $ph ], aspect = [ $aspect ]")
         ContentValues(6).apply {
             put(PaperInfoColumns.USED, PaperInfoContract.DB_VALUE_CONSTANT.FALSE)
@@ -116,10 +128,23 @@ enum class ResolverHelper {
             if (!TextUtils.isEmpty(url)) put(PaperInfoColumns.PHOTO_URL, url)
             if (!TextUtils.isEmpty(ph)) put(PaperInfoColumns.PH, ph)
             if (aspect > 0) put(PaperInfoColumns.ASPECT_RATIO, aspect)
+            put(PaperInfoColumns.NSFW, nsfw)
         }.let { getCR().insert(PaperInfoContract.PAPER_INFO_URI, it) }
     }
 
-    /**获取目标图片宽高比*/
-//    fun getPhotoAspect(photoId: Long): Float {
-//    }
+    /**指定图片是否是nsfw图片*/
+    fun isNsfwPhoto(photoId: Long): Boolean {
+        if (photoId < 0) return false
+        getCR().queryAdapter(PaperInfoContract.PAPER_INFO_URI, arrayOf(PaperInfoColumns.NSFW), "${PaperInfoColumns.PHOTO_ID} == $photoId").use {
+            return if (it.count > 0) {
+                it.moveToNext()
+                it.getInt(0) == PaperInfoContract.DB_VALUE_CONSTANT.TRUE
+            } else false
+        }
+    }
+
+    /**清理指定uri对应表或视图的数据*/
+    fun clearTable(uri: Uri): Unit {
+        getCR().delete(uri, null, null)
+    }
 }

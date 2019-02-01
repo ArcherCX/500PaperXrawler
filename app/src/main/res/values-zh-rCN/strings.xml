@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><!DOCTYPE resources [<!ENTITY appName "500PaperXrawler">]>
+<resources>
+    <string name="category_title">类别</string>
+    <string name="feature_title">专区</string>
+    <string name="category_title_feature_and_category">图片类型</string>
+    <string name="default_category">所有分类</string>
+    <string name="storage_cache_title">存储缓存</string>
+    <string name="storage_cache_summary">应用可存储的最大图片数量</string>
+    <string name="refresh_interval_title">刷新间隔</string>
+    <string name="refresh_interval_summary">壁纸每隔指定时间刷新一次 , 单位：秒 , [30 分钟，1 天] , %.1f 小时</string>
+    <string name="settings_title">设置</string>
+    <string name="misc_title">杂项</string>
+    <string name="download_via_wifi_title">仅通过Wi-Fi下载</string>
+    <string name="download_via_wifi_summary">仅在连接到Wi-Fi时下载新图片</string>
+    <string name="skip_title">跳过</string>
+    <string name="skip_summary">三指点击壁纸来跳过当前图片</string>
+    <string name="open_config_title">打开壁纸设置</string>
+    <string name="open_config_summary">打开壁纸设置来将&appName;设置为壁纸应用</string>
+    <string name="clear_cache_title">清除缓存</string>
+    <string name="clear_cache_dialog_msg">确定要删除所有缓存文件和数据库么？清除缓存会触发图片更新，请确保已连上Wi-Fi。缓存大小：%s 。</string>
+    <string name="clear_cache_summary">点击删除缓存的图片文件</string>
+    <string name="clear_history_title">清除历史</string>
+    <string name="clear_history_dialog_msg">确定要清除历史数据库和历史文件么？历史文件大小： %s 。</string>
+    <string name="clear_history_summary">点击清除历史记录和文件</string>
+    <string name="setup_wizard_title">设置向导</string>
+    <string name="setup_wizard_msg">要使用 &appName; ，你需要在下个页面将 &appName; 设置为你的壁纸</string>
+    <string name="show_nsfw_title">工作不宜</string>
+    <string name="show_nsfw_summary">是否显示工作不宜的壁纸</string>
+    <string name="feature_category_changed_hint">该设置变更不回立即生效，除非你清除缓存，清除缓存会触发图片更新，请确保已连上Wi-Fi。</string>
+    <string name="hint">提示</string>
+    <string name="category_conflict_info">裸体分类属于工作不宜，请先打开工作不宜开关。</string>
+    <string name="nsfw_conflict_info">你不能在仅选中裸体分类时关闭工作不宜开关。</string>
+</resources>
