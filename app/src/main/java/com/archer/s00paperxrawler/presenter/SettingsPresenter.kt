@@ -103,13 +103,7 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
 
     private fun executeClearCache() {
         val prefs = prefs()
-        val photosCachePath = prefs.photosCachePath
-        Runtime.getRuntime().exec(arrayOf("rm", "-rf", "$photosCachePath/*"))
-        val cacheDir = File(photosCachePath)
-        cacheDir.listFiles().let {
-            Log.w(TAG, "executeClearCache: command rm failed")
-            if (!it.isEmpty()) it.forEach { file -> file.delete() }
-        }
+        clearDirectory(prefs.photosCachePath)
         prefs.currentPage = 1
         prefs.isCacheEnough = false
         ResolverHelper.INSTANCE.clearTable(PaperInfoContract.UNUSED_PHOTOS_URI)
@@ -118,8 +112,18 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
     }
 
     private fun executeClearHistory() {
-        Runtime.getRuntime().exec("rm -rf ${prefs().photosHistoryPath}/*")
+        clearDirectory(prefs().photosHistoryPath)
         ResolverHelper.INSTANCE.clearTable(PaperInfoContract.PAPER_HISTORY_URI)
+    }
+
+    private fun clearDirectory(path: String) {
+        val cacheDir = File(path)
+        if (!cacheDir.isDirectory) return
+        Runtime.getRuntime().exec(arrayOf("rm", "-rf", "$path/*"))
+        cacheDir.listFiles().let {
+            Log.w(TAG, "clear directory $path by command failed ? ${!it.isEmpty()}")
+            if (!it.isEmpty()) it.forEach { file -> file.delete() }
+        }
     }
 
     /**通过命令行计算缓存文件大小*/
@@ -172,6 +176,9 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
     }
 
     override fun onDownloadViaWifiChange(enable: Boolean) {
-        if (enable) registerWifiCallback(getMyAppCtx()) else unregisterWifiAction(getMyAppCtx())
+        if (enable) registerWifiCallback(getMyAppCtx()) else {
+            unregisterWifiAction(getMyAppCtx())
+            DownloadService.startPendingDownloadAction()
+        }
     }
 }

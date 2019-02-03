@@ -16,7 +16,7 @@ private const val TAG = "GLPic"
  */
 class GLPic : Shape() {
     private val posBuffer by lazy {
-        Log.d(TAG, "null() called")
+        Log.d(TAG, "posBuffer lazy allocated")
         ByteBuffer.allocateDirect(16 * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()

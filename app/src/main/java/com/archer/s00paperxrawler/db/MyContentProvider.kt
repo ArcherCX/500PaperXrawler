@@ -89,6 +89,7 @@ class MyContentProvider : ContentProvider() {
             pairUnusedPhotos.second -> return db.delete(TABLES.TABLE_PAPER_INFO,
                     "${PaperInfoColumns.USED} == ${DB_CONSTANT.FALSE}", null)
             pairHistory.second -> return db.delete(TABLES.TABLE_PAPER_INFO, "${PaperInfoColumns.USED} == ${DB_CONSTANT.TRUE}", null)
+            pairUndownloadPhotos.second -> return db.delete(TABLES.TABLE_PAPER_INFO, "${PaperInfoColumns.DOWNLOAD} == ${DB_CONSTANT.FALSE}", null)
         }
         return 0
     }

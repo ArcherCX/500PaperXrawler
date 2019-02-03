@@ -19,10 +19,17 @@ class MyRenderer : GLRenderer {
     private val mViewMatrix = FloatArray(16)
     private val mMVPMatrix = FloatArray(16)
     private var viewRatio = 1f
+    /**最近的屏幕偏移量*/
+    private var xCurrentOffset: Float = 0F
+    /**最近的屏幕偏移步幅*/
+    private var xCurrentOffsetStep: Float = 0F
     var picPath = ""
         set(v) {
             field = v
-            if (::pic.isInitialized) pic.loadBitmap(v)
+            if (::pic.isInitialized) {
+                pic.loadBitmap(v)
+                pic.setXOffset(xCurrentOffset, xCurrentOffsetStep)
+            }
         }
     private lateinit var pic: GLPic
 
@@ -52,6 +59,8 @@ class MyRenderer : GLRenderer {
     }
 
     override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
+        xCurrentOffset = xOffset
+        xCurrentOffsetStep = xOffsetStep
         pic.setXOffset(xOffset, xOffsetStep)
     }
 

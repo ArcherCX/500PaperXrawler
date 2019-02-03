@@ -48,12 +48,12 @@ enum class Prefs {
         }
 
     var minCacheSize: Int
-        get() = pref.getInt("min_cache_size", 2)
-        set(value) = pref.edit().putInt("min_cache_size", if (value < 2) 2 else value).apply()
+        get() = pref.getInt("min_cache_size", 10)
+        set(value) = pref.edit().putInt("min_cache_size", if (value < 10) 10 else value).apply()
 
     var maxCacheSize: Int
-        get() = pref.getInt("max_cache_size", 5)
-        set(value) = pref.edit().putInt("max_cache_size", if (value < 5) 5 else value).apply()
+        get() = pref.getInt("max_cache_size", 20)
+        set(value) = pref.edit().putInt("max_cache_size", if (value < 20) 20 else value).apply()
 
     val photosCachePath: String
         get() {

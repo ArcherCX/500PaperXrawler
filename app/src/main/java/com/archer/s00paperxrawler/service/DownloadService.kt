@@ -228,7 +228,7 @@ class DownloadService : IntentService("DownloadService") {
         private fun startIntentService(action: String) {
             val prefs = prefs()
             val downloadViaWifi = prefs.downloadViaWifi
-            if (!downloadViaWifi || downloadViaWifi && prefs.wifiAvailable) {
+            if (!downloadViaWifi || prefs.wifiAvailable) {
                 val context = getMyAppCtx()
                 val intent = Intent(context, DownloadService::class.java).apply { this.action = action }
                 context.startService(intent)

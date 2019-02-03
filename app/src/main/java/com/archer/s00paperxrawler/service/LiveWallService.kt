@@ -18,6 +18,7 @@ import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.getLocalBroadcastManager
 import com.archer.s00paperxrawler.gl.GLRenderer
 import com.archer.s00paperxrawler.gl.OpenGLES2WallpaperService
+import com.archer.s00paperxrawler.utils.GestureDetector
 import com.archer.s00paperxrawler.utils.prefs
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -49,11 +50,12 @@ class LiveWallService : OpenGLES2WallpaperService() {
     }
 
 
-    inner class MyEngine : OpenGLES2Engine(), Loader.OnLoadCompleteListener<Cursor> {
+    inner class MyEngine : OpenGLES2Engine(), Loader.OnLoadCompleteListener<Cursor>, GestureDetector.OnThreeTouchListener {
         private val loader: CursorLoader = CursorLoader(this@LiveWallService, PaperInfoContract.UNUSED_PHOTOS_URI, arrayOf(PaperInfoColumns.PHOTO_ID, PaperInfoColumns.ASPECT_RATIO), ResolverHelper.INSTANCE.getNSFWSelection(), null, "${BaseColumns._ID} LIMIT 1")
         private lateinit var timer: Disposable
         private val receiver: BroadcastReceiver
         private var timestamp = SystemClock.elapsedRealtime()
+        private val gestureDetector = GestureDetector().apply { onThreeTouchListener = this@MyEngine }
 
         init {
             val prefs = prefs()
@@ -142,8 +144,13 @@ class LiveWallService : OpenGLES2WallpaperService() {
 
         override fun onTouchEvent(event: MotionEvent) {
             super.onTouchEvent(event)
-//            Log.d(TAG, "onTouchEvent ${MotionEvent.actionToString(event.action)}: count = ${event.pointerCount} , idx = ${event.actionIndex} ,id = ${event.getPointerId(event.actionIndex)}")
+            gestureDetector.onTouchEvent(event)
+        }
 
+        override fun onThreeTouchDown(ev: MotionEvent): Boolean {
+//            TODO("解决短时间多次调用的问题")
+            refreshWallpaper(0L)
+            return true
         }
 
         override fun onDestroy() {
