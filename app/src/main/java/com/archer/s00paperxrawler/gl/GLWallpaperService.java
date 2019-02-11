@@ -36,6 +36,7 @@ import android.view.SurfaceHolder;
 
 // Original code provided by Robert Green
 // http://www.rbgrn.net/content/354-glsurfaceview-adapted-3d-live-wallpapers
+//Modifications copyright (C) 2018 Xin Chen
 public class GLWallpaperService extends WallpaperService {
     private static final String TAG = "GLWallpaperService";
 
