@@ -56,8 +56,9 @@ class DownloadService : IntentService("DownloadService") {
 
     @SuppressLint("CheckResult", "UseValueOf")
     private fun handlePhotosDownload() {
+        Log.d(TAG, "handlePhotosDownload() called 0")
         if (prefs().isCacheEnough) return
-        Log.d(TAG, "handlePhotosDownload() called")
+        Log.d(TAG, "handlePhotosDownload() called 1")
         val builder = Request.Builder()
         val buf = ByteArray(1024)
         val dir = prefs().photosCachePath
@@ -113,8 +114,9 @@ class DownloadService : IntentService("DownloadService") {
     /**加载更多的图片信息*/
     @SuppressLint("CheckResult")
     private fun handleLoadPhotosUrl() {
-        Log.d(TAG, "handleLoadPhotosUrl() called start")
+        Log.d(TAG, "handleLoadPhotosUrl() called start 0")
         if (!ResolverHelper.INSTANCE.shouldLoadMoreInfo()) return
+        Log.d(TAG, "handleLoadPhotosUrl() called start 1")
         Observable.create<String> { emitter: ObservableEmitter<String> ->
             val csrfToken = prefs().csrfToken
             if (TextUtils.isEmpty(csrfToken)) {
@@ -133,12 +135,17 @@ class DownloadService : IntentService("DownloadService") {
             } else emitter.onNext(csrfToken)
             emitter.onComplete()
         }.map { token ->
+            Log.d(TAG, "handleLoadPhotosUrl: get token $token")
             val builder = Request.Builder()
             val request = builder.url(getLegacyApiUri(prefs().currentPage))
                     .header("X-CSRF-Token", token)
                     .build()
-            return@map okClient.newCall(request).execute()
+            val resp = okClient.newCall(request).execute()
+            Log.w(TAG, "handleLoadPhotosUrl: resp = [ $resp ]")
+            if (resp == null) throw Exception("Can't get API request response from 500px")
+            return@map resp
         }.map { response ->
+            Log.d(TAG, "handleLoadPhotosUrl: get api request response")
             when (response.code()) {
                 200 -> {
                     val json = response.body()?.string()
@@ -186,7 +193,9 @@ class DownloadService : IntentService("DownloadService") {
                     throw Exception("API Request Error, Http Status Code : ${response.code()}")
                 }
             }
-        }.retry(3).subscribe({}, {
+        }.retry(3).subscribe({
+            Log.d(TAG, "handleLoadPhotosUrl onNext: $it")
+        }, {
             it.printStackTrace()
             Handler(Looper.getMainLooper()).post { Toast.makeText(applicationContext, "Exception occurred while getting photo url , ${it.message}", Toast.LENGTH_LONG).show() }
         }, {

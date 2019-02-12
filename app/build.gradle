@@ -1,17 +1,13 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
+apply from: './signing_config.gradle'
+
 ext {
     appId = "com.archer.s00paperxrawler"
     authority = appId
 }
 android {
-    signingConfigs {
-        release {
-        }
-    }
     compileSdkVersion 28
     defaultConfig {
         applicationId appId
@@ -28,10 +24,44 @@ android {
         debug {
             buildConfigField('String', 'CONTENT_PROVIDER_AUTHORITY', "\"${authority}\"")
         }
-        release.initWith(buildTypes.debug)
-        release {
-            minifyEnabled false
+        sslDebug.initWith(buildTypes.debug)
+        sslDebug {
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        release {
+            buildConfigField('String', 'CONTENT_PROVIDER_AUTHORITY', "\"${authority}\"")
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+    sourceSets {
+        sslDebug { setRoot 'src/sslDebug' }
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "500PaperXrawler_${variant.buildType.name}_${variant.versionName}.apk"
+        }
+        variant.assembleProvider.get().doLast {
+            configure { assemble ->
+                copy {
+                    def resDir = variant.getPackageApplicationProvider().get().outputs.files[1]
+                    println("assemble copy task : " + resDir)
+                    File des = new File(getRootDir(), "AssembleApks/${variant.buildType.name}")
+                    if (des.exists()) {
+                        des.listFiles().each { it.delete() }
+                    }
+                    resDir.listFiles().any {
+                        if (it.getName().endsWith(".apk")) {
+                            from it
+                            into des
+                            return true
+                        }
+                    }
+                }
+            }
         }
     }
 }
