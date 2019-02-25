@@ -19,6 +19,7 @@ import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
+import io.reactivex.disposables.Disposable
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -41,6 +42,15 @@ private data class DownloadException(val id: Int, val msg: String) : RuntimeExce
 private const val RETRY_TIMES = 3L
 
 class DownloadService : IntentService("DownloadService") {
+    private var download: Disposable? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_CANCEL_ALL_DOWNLOAD -> cancelDownload()
+            else -> return super.onStartCommand(intent, flags, startId)
+        }
+        return START_NOT_STICKY
+    }
 
     override fun onHandleIntent(intent: Intent?) {
         when (intent?.action) {
@@ -49,8 +59,16 @@ class DownloadService : IntentService("DownloadService") {
         }
     }
 
+    private fun cancelDownload() {
+        Log.d(TAG, "cancelDownload() called 0 ${download == null}")
+        download?.apply {
+            Log.d(TAG, "cancelDownload() called 1 , isDis ? $isDisposed")
+            if (!isDisposed) dispose()
+        }
+    }
+
     private fun execHandler(e: Throwable) {
-        Log.e(TAG, "execHandler: ", e)
+        Log.e(TAG, "execHandler: ${e.message}")
         if (e is DownloadException) ResolverHelper.INSTANCE.setPhotoDownloaded(e.id, PaperInfoContract.DB_VALUE_CONSTANT.EXCEPTION)
     }
 
@@ -62,7 +80,7 @@ class DownloadService : IntentService("DownloadService") {
         val builder = Request.Builder()
         val buf = ByteArray(1024)
         val dir = prefs().photosCachePath
-        ResolverHelper.INSTANCE.getUndownloadPhotosUrl().flatMap { info ->
+        download = ResolverHelper.INSTANCE.getUndownloadPhotosUrl().flatMap { info ->
             return@flatMap Observable.just(info).map {
                 Log.i(TAG, "start download img : ${it.url}")
                 val request = builder.url(it.url)
@@ -118,14 +136,18 @@ class DownloadService : IntentService("DownloadService") {
         if (!ResolverHelper.INSTANCE.shouldLoadMoreInfo()) return
         Log.d(TAG, "handleLoadPhotosUrl() called start 1")
         Observable.create<String> { emitter: ObservableEmitter<String> ->
+            Log.d(TAG, "handleLoadPhotosUrl: try to get token")
             val csrfToken = prefs().csrfToken
             if (TextUtils.isEmpty(csrfToken)) {
                 val request = Request.Builder().url(getLoadUri()).build()
                 val response = okClient.newCall(request).execute()
-                if (response.body() == null) {
-                    emitter.onError(Exception("CSRF Token request failed with null response body"))
+                val code = response.code()
+                val body = response.body()
+                if (code != 200 || body == null) {
+                    emitter.onError(Exception("CSRF Token request failed : resp code = [ $code ], resp body = [ ${body?.string()?.substring(0, 100)} ]"))
+                    Log.e(TAG, "handleLoadPhotosUrl get csrf token failed : full resp body = [ $body ]")
                 } else {
-                    val ret = response.body()?.string()!!
+                    val ret = body!!.string()!!
                     val start = "<meta name=\"csrf-token\" content=\""
                     val startIndex = ret.indexOf(start) + start.length
                     val csrf = ret.substring(startIndex, ret.indexOf('"', startIndex))
@@ -207,21 +229,19 @@ class DownloadService : IntentService("DownloadService") {
     companion object {
         private const val ACTION_LOAD_PHOTOS_URL = "com.archer.s00paperxrawler.service.action.LOAD_PHOTOS_URL"
         private const val ACTION_PHOTOS_DOWNLOAD = "com.archer.s00paperxrawler.service.action.PHOTOS_DOWNLOAD"
+        private const val ACTION_CANCEL_ALL_DOWNLOAD = "com.archer.s00paperxrawler.service.action.CANCEL_ALL_DOWNLOAD"
 
         /**下载照片, impl:[handlePhotosDownload]*/
-        @JvmStatic
         fun startPhotosDownload() {
             startIntentService(ACTION_PHOTOS_DOWNLOAD)
         }
 
         /**从500px加载照片信息, impl:[handleLoadPhotosUrl]*/
-        @JvmStatic
         fun startLoadPhotosUrl() {
             startIntentService(ACTION_LOAD_PHOTOS_URL)
         }
 
         /**开始等待中的下载任务*/
-        @JvmStatic
         fun startPendingDownloadAction() {
             val pendingDownloadAction: MutableSet<String>
             synchronized(Companion::class.java) {
@@ -233,17 +253,25 @@ class DownloadService : IntentService("DownloadService") {
             }
         }
 
-        @JvmStatic
+        /**取消所有下载任务*/
+        fun cancelDownload() {
+            startIntentServiceDirectly(ACTION_CANCEL_ALL_DOWNLOAD)
+        }
+
         private fun startIntentService(action: String) {
             val prefs = prefs()
             val downloadViaWifi = prefs.downloadViaWifi
             if (!downloadViaWifi || prefs.wifiAvailable) {
-                val context = getMyAppCtx()
-                val intent = Intent(context, DownloadService::class.java).apply { this.action = action }
-                context.startService(intent)
+                startIntentServiceDirectly(action)
             } else {
                 prefs.pendingDownloadAction = prefs.pendingDownloadAction.apply { add(action) }
             }
+        }
+
+        private fun startIntentServiceDirectly(action: String) {
+            val context = getMyAppCtx()
+            val intent = Intent(context, DownloadService::class.java).apply { this.action = action }
+            context.startService(intent)
         }
     }
 }

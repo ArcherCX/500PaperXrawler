@@ -12,6 +12,7 @@ import com.archer.s00paperxrawler.R
 import com.archer.s00paperxrawler.contract.REQUEST_CODE_CHANGE_LIVE_WALLPAPER
 import com.archer.s00paperxrawler.contract.SettingsContract
 import com.archer.s00paperxrawler.getMyString
+import com.archer.s00paperxrawler.service.DownloadService
 import com.archer.s00paperxrawler.utils.MyPreferenceDataStore
 import com.archer.s00paperxrawler.utils.prefs
 
@@ -103,7 +104,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CODE_CHANGE_LIVE_WALLPAPER) {
-            prefs().isCurrentWallPaper = resultCode == Activity.RESULT_OK
+            val isOK = resultCode == Activity.RESULT_OK
+            prefs().isCurrentWallPaper = isOK
+            if (!isOK) DownloadService.cancelDownload()
         }
     }
 

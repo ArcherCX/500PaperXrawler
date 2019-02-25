@@ -70,6 +70,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
                             ACTION_REFRESH_WALLPAPER -> refreshWallpaper(0L)
                             ACTION_MONITOR_DB -> {
                                 loader.selection = ResolverHelper.INSTANCE.getNSFWSelection()
+                                loader.unregisterListener(this@MyEngine)
                                 loader.registerListener(1, this@MyEngine)
                                 if (!loader.isStarted) loader.startLoading()
                             }
@@ -110,6 +111,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
 
         private fun refreshWallpaper(interval: Long = prefs().refreshInterval.toLong()) {
             Log.d(TAG, "refreshWallpaper() called with: interval = [ $interval ] , timestamp = $timestamp")
+            if (::timer.isInitialized) timer.dispose()
             timer = Observable.timer(interval, TimeUnit.SECONDS).subscribe {
                 refreshWallpaper()
                 val prefs = prefs()
@@ -158,7 +160,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
             getLocalBroadcastManager().unregisterReceiver(receiver)
             if (loader.isStarted) {
                 loader.unregisterListener(this)
-                loader.stopLoading()
+                loader.reset()
             }
             if (::timer.isInitialized && !timer.isDisposed) timer.dispose()
         }

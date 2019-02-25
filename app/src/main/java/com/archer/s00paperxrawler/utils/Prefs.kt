@@ -123,6 +123,7 @@ enum class Prefs {
         set(value) {
             pref.edit().putBoolean("wifi_available", value).apply()
             if (value) DownloadService.startPendingDownloadAction()
+            else if (!value && downloadViaWifi) DownloadService.cancelDownload()
         }
 
     /**暂停执行的联网操作*/
