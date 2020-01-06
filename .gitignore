@@ -140,3 +140,4 @@ fabric.properties
 /app/src/androidTest/
 /app/src/test/
 /.idea/
+/app/signing_config.gradle
