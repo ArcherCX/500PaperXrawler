@@ -56,12 +56,13 @@ class LiveWallService : OpenGLES2WallpaperService() {
         private val receiver: BroadcastReceiver
         private var timestamp = SystemClock.elapsedRealtime()
         private val gestureDetector = GestureDetector().apply { onThreeTouchListener = this@MyEngine }
+        private var listenerRegistered = false
 
         init {
             val prefs = prefs()
             prefs.isCurrentWallPaper = WallpaperManager.getInstance(applicationContext).wallpaperInfo?.packageName == applicationContext.packageName ?: false
             prefs.currentPage = 1
-            loader.registerListener(1, this)
+            registerLoaderListener (1, this)
             loader.startLoading()
             receiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
@@ -70,8 +71,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
                             ACTION_REFRESH_WALLPAPER -> refreshWallpaper(0L)
                             ACTION_MONITOR_DB -> {
                                 loader.selection = ResolverHelper.INSTANCE.getNSFWSelection()
-                                loader.unregisterListener(this@MyEngine)
-                                loader.registerListener(1, this@MyEngine)
+                                registerLoaderListener(1, this@MyEngine)
                                 if (!loader.isStarted) loader.startLoading()
                             }
                         }
@@ -84,7 +84,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
             })
         }
 
-        override fun onLoadComplete(loader: androidx.loader.content.Loader<Cursor>, data: Cursor?) {
+        override fun onLoadComplete(loader: Loader<Cursor>, data: Cursor?) {
             Log.d(TAG, "onLoadComplete() called with: loader = [ ${loader.id} ], data = [ ${data?.count}, ${Arrays.toString(data?.columnNames)} ]")
             val count = data?.count ?: 0
             when {
@@ -93,7 +93,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
                         val photoId = data.getLong(0)
                         val aspect = data.getFloat(1)
                         loader.reset()
-                        loader.unregisterListener(this)
+                        unregisterLoaderListener(this)
                         refreshWallpaper()
                         startDrawPaper(photoId, aspect)
                     }
@@ -159,10 +159,24 @@ class LiveWallService : OpenGLES2WallpaperService() {
             super.onDestroy()
             getLocalBroadcastManager().unregisterReceiver(receiver)
             if (loader.isStarted) {
-                loader.unregisterListener(this)
+                unregisterLoaderListener(this)
                 loader.reset()
             }
             if (::timer.isInitialized && !timer.isDisposed) timer.dispose()
+        }
+
+        private fun registerLoaderListener(id: Int, listener: Loader.OnLoadCompleteListener<Cursor>) {
+            if (!listenerRegistered) {
+                listenerRegistered = true
+                loader.registerListener(id, listener)
+            }
+        }
+
+        private fun unregisterLoaderListener(listener: Loader.OnLoadCompleteListener<Cursor>) {
+            if (listenerRegistered) {
+                listenerRegistered = false
+                loader.unregisterListener(listener)
+            }
         }
 
     }
