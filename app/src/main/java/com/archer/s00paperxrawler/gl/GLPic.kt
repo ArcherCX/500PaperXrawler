@@ -26,6 +26,8 @@ class GLPic : Shape() {
     private var xOffset = 0F
     /**纹理应展示的图片宽度，该宽度基于纹理坐标系计算*/
     private var textureWidth = 1f
+    /**纹理应展示的图片高度，该宽度基于纹理坐标系计算*/
+    private var textureHeight = 1f
     /**纹理滑动偏移量范围*/
     private var textureOffsetRange = 0f
     override var viewRatio: Float = 1f
@@ -44,6 +46,11 @@ class GLPic : Shape() {
     /**Texture handle数组*/
     private val textures = IntArray(1)
 
+    private val matrixLocation = glGetUniformLocation(programHandle, glsl_uMatrix)
+    private val virtualPosLocation = glGetAttribLocation(programHandle, glsl_aPos)
+    private val texturePosLocation = glGetAttribLocation(programHandle, glsl_aTexturePos)
+    private val samplerTextureLocation = glGetUniformLocation(programHandle, glsl_uSamplerTexture)
+
     /**
      * [bmpRatio]和[viewRatio]的变化会导致[textureWidth]、[textureOffsetRange]、[posBuffer]都产生变化，
      * 在此统一调整
@@ -54,29 +61,57 @@ class GLPic : Shape() {
     }
 
     /**
-     * 设图片宽高为bw、bh，可展示区域宽高为sw、sh，纹理宽高为tw、th，则[bmpRatio]=bw/bh，[viewRatio]=sw/sh，
-     * 由于固定展示全高，则纹理高th=1，且要保证纹理不变形，所以需要确定影响纹理宽的系数x，使得bw * x/bh=[viewRatio]，
-     * 也就是x * [bmpRatio]=[viewRatio]，最终得到x=[viewRatio]/[bmpRatio]，因为纹理坐标系取值范围为[0,1]，所以
-     * 纹理宽tw=1*x=x
+     * bitmap width/height abbreviated to bw/bh = [bmpRatio]
+     *
+     * view width/height abbreviated to vw/vh = [viewRatio]
+     *
+     * treat texture's max x/y coordinate as width/height abbreviated to tw/th
+     *
+     *  有两种情况：
+     * * 1.[bmpRatio] < [viewRatio]，如果展示全高则宽不够填满view，此时转换为展示全宽（即tw = 1），以x为系数截取部分高,
+     * 为了保持图片不变形，需要保证[bmpRatio]，所以：
+     * bw/(x*bh) = [viewRatio] -> x = [bmpRatio]/[viewRatio]
+     *
+     * * 2.[bmpRatio] >= [viewRatio], 展示图片全高（即th = 1）后图片宽依然有富余，以x为系数截取部分宽，为了保持图片不变形，
+     * 为了保持图片不变形，需要保证[bmpRatio]，所以：
+     * x*bw/bh = [viewRatio] -> x = [viewRatio]/[bmpRatio]
+     *
+     * texture x/y coordinate 取值范围均为[0，1]，跟实际比例无关，所以上方的x系数即为tw/th的值
+     *
      */
     private fun calTextureWidth() {
-        textureWidth = viewRatio / bmpRatio
-        textureOffsetRange = 1 - textureWidth
+        if (bmpRatio < viewRatio) {
+            textureWidth = 1F
+            textureHeight = bmpRatio / viewRatio
+            textureOffsetRange = 0F
+        } else {
+            textureWidth = viewRatio / bmpRatio
+            textureHeight = 1F
+            textureOffsetRange = 1 - textureWidth
+        }
     }
+
+    private val posArray = floatArrayOf(
+            //x,y,s,t
+            -1f, 1f, xOffset, 0f,
+            -1f, -1f, xOffset, textureHeight,
+            1f, 1f, textureWidth + xOffset, 0f,
+            1f, -1f, textureWidth + xOffset, textureHeight
+    )
 
     /**获取图片绘制坐标缓冲*/
     private fun getPosArray(): FloatArray {
-        return floatArrayOf(
-                //x,y,s,t
-                -viewRatio, 1f, xOffset, 0f,
-                -viewRatio, -1f, xOffset, 1f,
-                viewRatio, 1f, textureWidth + xOffset, 0f,
-                viewRatio, -1f, textureWidth + xOffset, 1f
-        )
+        posArray[2] = xOffset
+        posArray[6] = xOffset
+        posArray[7] = textureHeight
+        posArray[10] = textureWidth + xOffset
+        posArray[14] = textureWidth + xOffset
+        posArray[15] = textureHeight
+        Log.i(TAG, "posArray[14] = ${posArray[14]}, textureWidth = $textureWidth, xOffset = $xOffset")
+        return posArray
     }
 
     fun setXOffset(xOffset: Float, xOffsetStep: Float) {
-        if (xOffsetStep == 0f) return//初始化WallpaperService时，Engine的onOffsetsChanged回调存在所有参数为0的情况，直接略过
         val additionalScreenNum = (1 / xOffsetStep).roundToInt()//额外的屏幕数量
         val additionalTextureWidth = additionalScreenNum * textureWidth
         val textureOffsetRange: Float
@@ -120,26 +155,19 @@ class GLPic : Shape() {
             "}"
 
     override fun bindData(uMVPMatrix: FloatArray) {
+        glUniformMatrix4fv(matrixLocation, 1, false, uMVPMatrix, 0)
+        //vertices坐标赋值
+        posBuffer.position(0)
+        glVertexAttribPointer(virtualPosLocation, 2, GL_FLOAT, false, 16, posBuffer)
+        glEnableVertexAttribArray(virtualPosLocation)
+        //textures坐标赋值
+        posBuffer.position(2)
+        glVertexAttribPointer(texturePosLocation, 2, GL_FLOAT, false, 16, posBuffer)
+        glEnableVertexAttribArray(texturePosLocation)
+        //texture unit赋值
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, textures[0])
-        glGetUniformLocation(programHandle, glsl_uMatrix).also {
-            glUniformMatrix4fv(it, 1, false, uMVPMatrix, 0)
-        }
-        /*当GLThread.guardRun()执行完后，进入新一轮的循环时，如果没有参数变化，则posBuffer的position依然会停留在
-        * 上一轮绘制结束时的位置[2]上，导致此轮绘制的图片不在正常位置上，所以每次进入重新置位*/
-        posBuffer.position(0)
-        glGetAttribLocation(programHandle, glsl_aPos).also {
-            glVertexAttribPointer(it, 2, GL_FLOAT, false, 16, posBuffer)
-            glEnableVertexAttribArray(it)
-        }
-        glGetAttribLocation(programHandle, glsl_aTexturePos).also {
-            posBuffer.position(2)
-            glVertexAttribPointer(it, 2, GL_FLOAT, false, 16, posBuffer)
-            glEnableVertexAttribArray(it)
-        }
-        glGetUniformLocation(programHandle, glsl_uSamplerTexture).also {
-            glUniform1i(it, 0)
-        }
+        glUniform1i(samplerTextureLocation, 0)
     }
 
     override fun doRealDraw(uMVPMatrix: FloatArray) {

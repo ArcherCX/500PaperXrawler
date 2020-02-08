@@ -18,7 +18,6 @@ class MyRenderer : GLRenderer {
     private val mProjectionMatrix = FloatArray(16)
     private val mViewMatrix = FloatArray(16)
     private val mMVPMatrix = FloatArray(16)
-    private var viewRatio = 1f
     /**最近的屏幕偏移量*/
     private var xCurrentOffset: Float = 0F
     /**最近的屏幕偏移步幅*/
@@ -28,7 +27,7 @@ class MyRenderer : GLRenderer {
             field = v
             if (::pic.isInitialized) {
                 pic.loadBitmap(v)
-                pic.setXOffset(xCurrentOffset, xCurrentOffsetStep)
+                if (xCurrentOffsetStep > 0F) pic.setXOffset(xCurrentOffset, xCurrentOffsetStep)
             }
         }
     private lateinit var pic: GLPic
@@ -42,9 +41,8 @@ class MyRenderer : GLRenderer {
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         Log.d(TAG, "onSurfaceChanged() called with: gl = [ $gl ], width = [ $width ], height = [ $height ]")
         GLES20.glViewport(0, 0, width, height)
-        viewRatio = width / height.toFloat()
-        pic.viewRatio = viewRatio
-        Matrix.orthoM(mProjectionMatrix, 0, -viewRatio, viewRatio, -1f, 1f, -1f, 1f)
+        pic.viewRatio = width / height.toFloat()
+        Matrix.orthoM(mProjectionMatrix, 0, -1f, 1f, -1f, 1f, -1f, 1f)
         /*eye坐标是视点坐标，但是使用正交投影就无所谓eye.z的值，投射后大小不变，如果使用锥视投影frustum，配合lookAt的near，
         far可以产生不同大小的投影而不需要修改图片大小，center坐标是焦点中心，up坐标控制投影图的方向，可以产生图片的旋转效果*/
         Matrix.setLookAtM(mViewMatrix, 0, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f)
@@ -59,6 +57,7 @@ class MyRenderer : GLRenderer {
     }
 
     override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
+        Log.d(TAG, "onOffsetsChanged() called with: xOffset = [ $xOffset ], yOffset = [ $yOffset ], xOffsetStep = [ $xOffsetStep ], yOffsetStep = [ $yOffsetStep ], xPixelOffset = [ $xPixelOffset ], yPixelOffset = [ $yPixelOffset ]")
         xCurrentOffset = xOffset
         xCurrentOffsetStep = xOffsetStep
         pic.setXOffset(xOffset, xOffsetStep)
