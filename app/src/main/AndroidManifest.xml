@@ -22,6 +22,7 @@
         tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/MyPreferenceTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

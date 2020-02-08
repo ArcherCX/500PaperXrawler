@@ -12,6 +12,7 @@ import com.archer.s00paperxrawler.R
 import com.archer.s00paperxrawler.contract.REQUEST_CODE_CHANGE_LIVE_WALLPAPER
 import com.archer.s00paperxrawler.contract.SettingsContract
 import com.archer.s00paperxrawler.getMyString
+import com.archer.s00paperxrawler.presenter.SettingsPresenter
 import com.archer.s00paperxrawler.service.DownloadService
 import com.archer.s00paperxrawler.utils.MyPreferenceDataStore
 import com.archer.s00paperxrawler.utils.prefs
@@ -23,6 +24,11 @@ private const val TAG = "SettingFragment"
  */
 class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Preference.OnPreferenceChangeListener, Preference.OnPreferenceClickListener {
     override lateinit var presenter: SettingsContract.Presenter
+
+    init {
+        SettingsPresenter(this)
+    }
+
     private val preferenceDataStore = MyPreferenceDataStore()
     private lateinit var dialog: AlertDialog
 
