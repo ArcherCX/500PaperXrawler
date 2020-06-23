@@ -77,6 +77,13 @@
             android:title="@string/download_via_wifi_title"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/parallax_effect_key"
+            android:summary="@string/parallax_effect_summary"
+            android:title="@string/parallax_effect_title"
+            app:iconSpaceReserved="false" />
+
         <Preference
             android:key="@string/clear_cache_key"
             android:summary="@string/clear_cache_summary"

@@ -156,5 +156,9 @@ enum class Prefs {
     /**Current Mode, true:web, false:local*/
     var currentMode:Boolean
         get() = pref.getBoolean(getMyString(R.string.mode_key), true)
-        set(value) = pref.edit().putBoolean(getMyString(R.string.mode_key),value).apply()
+        set(value) = pref.edit().putBoolean(getMyString(R.string.mode_key), value).apply()
+
+    val parallaxEffectEnabled:Boolean
+        get() = pref.getBoolean(getMyString(R.string.parallax_effect_key), true)
+
 }

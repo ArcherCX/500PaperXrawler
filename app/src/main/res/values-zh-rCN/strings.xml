@@ -43,4 +43,6 @@
     <string name="local_photo_dir_dialog_neutral_btn">再选</string>
     <string name="local_photo_dir_number_limit">不能超过5个文件夹</string>
     <string name="can_not_delete_all_dir">您不能删除所有文件夹</string>
+    <string name="parallax_effect_title">视差效果</string>
+    <string name="parallax_effect_summary">当在桌面滑动屏幕时同时滚动壁纸。此功能需要启动器支持，据我所知，三星、华为默认的启动器可能不支持该功能，如果出现壁纸被分割的情况，请关闭此功能。</string>
 </resources>

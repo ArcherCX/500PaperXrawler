@@ -6,6 +6,7 @@ import android.text.TextUtils
 import android.util.Log
 import com.archer.s00paperxrawler.gl.GLPic
 import com.archer.s00paperxrawler.gl.GLRenderer
+import com.archer.s00paperxrawler.utils.prefs
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -18,8 +19,10 @@ class MyRenderer : GLRenderer {
     private val mProjectionMatrix = FloatArray(16)
     private val mViewMatrix = FloatArray(16)
     private val mMVPMatrix = FloatArray(16)
+
     /**最近的屏幕偏移量*/
     private var xCurrentOffset: Float = 0F
+
     /**最近的屏幕偏移步幅*/
     private var xCurrentOffsetStep: Float = 0F
     var picPath = ""
@@ -58,12 +61,15 @@ class MyRenderer : GLRenderer {
 
     override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float, yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
         Log.d(TAG, "onOffsetsChanged() called with: xOffset = [ $xOffset ], yOffset = [ $yOffset ], xOffsetStep = [ $xOffsetStep ], yOffsetStep = [ $yOffsetStep ], xPixelOffset = [ $xPixelOffset ], yPixelOffset = [ $yPixelOffset ]")
+        if (!prefs().parallaxEffectEnabled) return
         xCurrentOffset = xOffset
         xCurrentOffsetStep = xOffsetStep
         pic.setXOffset(xOffset, xOffsetStep)
     }
 
     override fun onDestroy() {
-        pic.onDestroy()
+        if (::pic.isInitialized) {
+            pic.onDestroy()
+        }
     }
 }
