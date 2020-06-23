@@ -5,6 +5,12 @@
     <PreferenceCategory
         android:title="@string/category_title_feature_and_category"
         app:iconSpaceReserved="false">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="@string/mode_key"
+            android:summary="@string/mode_summary"
+            android:title="@string/mode_title"
+            app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="@string/feature_default"
             android:entries="@array/features_entries"
@@ -29,6 +35,11 @@
         android:title="@string/settings_title"
         app:allowDividerAbove="false"
         app:iconSpaceReserved="false">
+        <Preference
+            android:key="@string/photo_dirs_key"
+            android:title="@string/photo_dirs_title"
+            app:iconSpaceReserved="false" />
+
         <com.archer.s00paperxrawler.view.MySeekBarPreference
             android:defaultValue="@string/refresh_interval_default"
             android:key="@string/refresh_interval_key"

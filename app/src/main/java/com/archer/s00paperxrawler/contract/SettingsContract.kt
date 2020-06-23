@@ -1,6 +1,7 @@
 package com.archer.s00paperxrawler.contract
 
 import android.content.DialogInterface
+import android.net.Uri
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
@@ -8,6 +9,7 @@ import com.archer.s00paperxrawler.BasePresenter
 import com.archer.s00paperxrawler.BaseView
 
 const val REQUEST_CODE_CHANGE_LIVE_WALLPAPER = 10
+const val REQUEST_CODE_START_IMAGE_PICKER = 11
 
 /**
  * Created by Chen Xin on 2019/1/28.
@@ -20,6 +22,15 @@ interface SettingsContract {
 
         /**显示Toast*/
         fun toast(content: String, duration: Int = Toast.LENGTH_SHORT)
+
+        /**启动系统的图片选择器*/
+        fun startImagePicker()
+
+        /**
+         * 模式切换后调整界面
+         * @param mode 当前的模式，true:web mode, false:local mode
+         */
+        fun layoutAdjustForModeSwitch(mode: Boolean)
     }
 
     interface Presenter : BasePresenter {
@@ -43,5 +54,17 @@ interface SettingsContract {
 
         /**Feature、Category变化时执行操作*/
         fun onFeatureCategoryChange(preference: Preference?, newValue: Any?)
+
+        /**
+         * When Mode Changed
+         * @param newMode true:web, false:local
+         * @return Can mode allowed to be changed
+         */
+        fun onModeChange(newMode: Boolean): Boolean
+
+        /**
+         * Handle the directory uri returned by the picker
+         */
+        fun handlePhotoDir(data: Uri)
     }
 }

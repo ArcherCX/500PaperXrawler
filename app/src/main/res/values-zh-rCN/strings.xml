@@ -30,4 +30,17 @@
     <string name="hint">提示</string>
     <string name="category_conflict_info">裸体分类属于工作不宜，请先打开工作不宜开关。</string>
     <string name="nsfw_conflict_info">你不能在仅选中裸体分类时关闭工作不宜开关。</string>
+    <string name="mode_title">模式</string>
+    <string name="mode_summary">On: 网络模式，以网络图片作为壁纸源，\\nOff: 本地模式，以本地图片作为壁纸源。</string>
+    <string name="select_local_photo_msg">数据库内没有本地图片信息，请先选择你的壁纸文件夹。</string>
+    <string name="select_local_photo_title">请选择文件夹</string>
+    <string name="selection_error">抱歉，无法获取有效返回</string>
+    <string name="reading_local_photo_info">正在读取本地图片信息...</string>
+    <string name="cannot_find_valid_photo_files">抱歉，无法在目标文件夹内找到有效图片文件。</string>
+    <string name="photo_dirs_title">图片文件夹</string>
+    <string name="local_photo_dir_dialog_positive_btn">删除</string>
+    <string name="local_photo_dir_dialog_negative_btn">取消</string>
+    <string name="local_photo_dir_dialog_neutral_btn">再选</string>
+    <string name="local_photo_dir_number_limit">不能超过5个文件夹</string>
+    <string name="can_not_delete_all_dir">您不能删除所有文件夹</string>
 </resources>

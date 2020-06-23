@@ -128,7 +128,7 @@ enum class Prefs {
 
     /**暂停执行的联网操作*/
     var pendingDownloadAction: MutableSet<String>
-        get() = pref.getStringSet("pending_download_action", mutableSetOf<String>())
+        get() = pref.getStringSet("pending_download_action", mutableSetOf<String>())!!
         set(value) = pref.edit().putStringSet("pending_download_action", value).apply()
 
     var isFirstLaunch: Boolean
@@ -143,8 +143,18 @@ enum class Prefs {
     val showNSFW: Boolean
         get() = pref.getBoolean(getMyString(R.string.show_nsfw_key), getMyString(R.string.show_nsfw_default).toBoolean())
 
-    /**当前壁纸的[com.archer.s00paperxrawler.db.PaperInfoContract.Columns.PHOTO_ID]*/
+    /**当前web壁纸的[com.archer.s00paperxrawler.db.PaperInfoContract.Columns.PHOTO_ID]*/
     var currentPhotoId: Long
         get() = pref.getLong("current_photo_id", -1L)
         set(value) = pref.edit().putLong("current_photo_id", if (isCurrentWallPaper) value else -1L).apply()
+
+    /**Current local photo id in db*/
+    var currentLocalPhotoId:Long
+        get() = pref.getLong("local_photo_id", -1L)
+        set(value) = pref.edit().putLong("local_photo_id",value).apply()
+
+    /**Current Mode, true:web, false:local*/
+    var currentMode:Boolean
+        get() = pref.getBoolean(getMyString(R.string.mode_key), true)
+        set(value) = pref.edit().putBoolean(getMyString(R.string.mode_key),value).apply()
 }

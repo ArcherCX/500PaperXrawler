@@ -49,4 +49,19 @@
     <string name="hint">Hint</string>
     <string name="category_conflict_info">Nude category is NSFW , please enable NSFW first.</string>
     <string name="nsfw_conflict_info">You may not disable NSFW when only select Nude category.</string>
+    <string name="mode_key" translatable="false">mode</string>
+    <string name="mode_title">Mode</string>
+    <string name="mode_summary">On:Web Mode, use web pictures as wallpaper source\nOff:Local Mode, use your local pictures as wallpaper source.</string>
+    <string name="select_local_photo_title">Please Select Directory</string>
+    <string name="select_local_photo_msg">There is no local photo information in database, please select your wallpaper directory.</string>
+    <string name="selection_error">Sorry, can\'t get a valid return value</string>
+    <string name="reading_local_photo_info">Reading local photo information…</string>
+    <string name="cannot_find_valid_photo_files">Sorry, can\'t find valid photo files in the target directory</string>
+    <string name="photo_dirs_key" translatable="false">photo_dirs</string>
+    <string name="photo_dirs_title">Photo Directories</string>
+    <string name="local_photo_dir_dialog_positive_btn">Delete</string>
+    <string name="local_photo_dir_dialog_negative_btn">Cancel</string>
+    <string name="local_photo_dir_dialog_neutral_btn">Select</string>
+    <string name="local_photo_dir_number_limit">Can\'t be more than 5 directories</string>
+    <string name="can_not_delete_all_dir">You can\'t delete all directories</string>
 </resources>

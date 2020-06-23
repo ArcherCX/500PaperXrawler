@@ -12,7 +12,7 @@ typealias TABLES = PaperInfoContract.Tables
 typealias VIEWS = PaperInfoContract.Views
 
 private const val DB_NAME = "paper_info.db"
-private const val DB_VERSION = 1
+private const val DB_VERSION = 2
 
 fun getWritableDB(): SQLiteDatabase {
     return DBHelper.Singleton.instance.writableDatabase
@@ -81,6 +81,16 @@ class DBHelper private constructor() : SQLiteOpenHelper(getMyAppCtx(), DB_NAME, 
                         "${PaperInfoColumns.PHOTO_ID} " +
                         "FROM ${TABLES.TABLE_PAPER_INFO} " +
                         "WHERE ${PaperInfoColumns.DOWNLOAD} == $FALSE"
+
+        private const val SQL_CREATE_LOCAL_PHOTOS_INFO =
+                "CREATE TABLE IF NOT EXISTS ${TABLES.TABLE_LOCAL_PAPER_INFO} (" +
+                        "${BaseColumns._ID}                     INTEGER PRIMARY KEY," +
+                        "${PaperInfoColumns.PHOTO_NAME}         VARCHAR(100)," +
+                        "${PaperInfoColumns.LOCAL_FILE_OWNER}   INTEGER," +
+                        "${PaperInfoColumns.IS_DIR}             INTEGER DEFAULT $FALSE," +
+                        "${PaperInfoColumns.LOCAL_PHOTO_URI}         VARCHAR UNIQUE," +
+                        "${PaperInfoColumns.USED}               INTEGER DEFAULT $FALSE" +
+                        ");"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -88,9 +98,11 @@ class DBHelper private constructor() : SQLiteOpenHelper(getMyAppCtx(), DB_NAME, 
         db?.execSQL(SQL_CREATE_UNUSED_PHOTOS_VIEW)
         db?.execSQL(SQL_CREATE_UNDOWNLOAD_PHOTOS_VIEW)
         db?.execSQL(SQL_CREATE_HISTORY_VIEW)
+        db?.execSQL(SQL_CREATE_LOCAL_PHOTOS_INFO)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        if (oldVersion == 1) db?.execSQL(SQL_CREATE_LOCAL_PHOTOS_INFO)
     }
 
 }

@@ -1,33 +1,29 @@
 package com.archer.s00paperxrawler.presenter
 
+import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.Uri
 import android.text.format.Formatter
 import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
-import com.archer.s00paperxrawler.R
+import com.archer.s00paperxrawler.*
 import com.archer.s00paperxrawler.contract.REQUEST_CODE_CHANGE_LIVE_WALLPAPER
 import com.archer.s00paperxrawler.contract.SettingsContract
 import com.archer.s00paperxrawler.db.PaperInfoContract
 import com.archer.s00paperxrawler.db.ResolverHelper
-import com.archer.s00paperxrawler.getLocalBroadcastManager
-import com.archer.s00paperxrawler.getMyAppCtx
-import com.archer.s00paperxrawler.getMyString
-import com.archer.s00paperxrawler.service.ACTION_MONITOR_DB
-import com.archer.s00paperxrawler.service.ACTION_REFRESH_WALLPAPER
-import com.archer.s00paperxrawler.service.DownloadService
-import com.archer.s00paperxrawler.service.LiveWallService
-import com.archer.s00paperxrawler.utils.prefs
-import com.archer.s00paperxrawler.utils.registerWifiCallback
-import com.archer.s00paperxrawler.utils.unregisterWifiAction
+import com.archer.s00paperxrawler.service.*
+import com.archer.s00paperxrawler.utils.*
 import com.archer.s00paperxrawler.view.setNewSummary
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.functions.Action
+import io.reactivex.internal.functions.Functions
 import io.reactivex.schedulers.Schedulers
 import java.io.File
 import java.nio.charset.Charset
@@ -106,14 +102,14 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
         clearDirectory(prefs.photosCachePath)
         prefs.currentPage = 1
         prefs.isCacheEnough = false
-        ResolverHelper.INSTANCE.clearTable(PaperInfoContract.UNUSED_PHOTOS_URI)
-        getLocalBroadcastManager().sendBroadcast(Intent(ACTION_MONITOR_DB))
+        ResolverHelper.INSTANCE.clearTable(PaperInfoContract.URI.UNUSED_PHOTOS_URI)
+        if (prefs.currentMode) sendLocalBroadcast(Intent(ACTION_MONITOR_DB))
         DownloadService.startLoadPhotosUrl()
     }
 
     private fun executeClearHistory() {
         clearDirectory(prefs().photosHistoryPath)
-        ResolverHelper.INSTANCE.clearTable(PaperInfoContract.PAPER_HISTORY_URI)
+        ResolverHelper.INSTANCE.clearTable(PaperInfoContract.URI.PAPER_HISTORY_URI)
     }
 
     private fun clearDirectory(path: String) {
@@ -158,6 +154,7 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
                     Intent().also {
                         it.action = WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER
                         it.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, ComponentName(this@apply, LiveWallService::class.java))
+                        it.putExtra("SET_LOCKSCREEN_WALLPAPER", true)
                     }, REQUEST_CODE_CHANGE_LIVE_WALLPAPER)
         }
     }
@@ -170,7 +167,7 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
                 view.toast(getMyString(R.string.nsfw_conflict_info))
                 return false
             }
-            if (prefs.isCurrentWallPaper && ResolverHelper.INSTANCE.isNsfwPhoto(prefs.currentPhotoId)) getLocalBroadcastManager().sendBroadcast(Intent(ACTION_REFRESH_WALLPAPER))
+            if (prefs.isCurrentWallPaper && ResolverHelper.INSTANCE.isNsfwPhoto(prefs.currentPhotoId)) sendLocalBroadcast(Intent(ACTION_REFRESH_WALLPAPER))
         }
         return true
     }
@@ -180,5 +177,47 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
             unregisterWifiAction(getMyAppCtx())
             DownloadService.startPendingDownloadAction()
         }
+    }
+
+    override fun onModeChange(newMode: Boolean): Boolean {
+        if (newMode) {//web mode
+            view.layoutAdjustForModeSwitch(newMode)
+            doModeChange(newMode)
+            return true
+        } else {//local mode
+            if (ResolverHelper.INSTANCE.hasLocalPhotosInfo()) {
+                view.layoutAdjustForModeSwitch(newMode)
+                doModeChange(newMode)
+                return true
+            }
+            view.showDialog(getMyString(R.string.select_local_photo_title), getMyString(R.string.select_local_photo_msg),
+                    DialogInterface.OnClickListener { _, _ -> view.startImagePicker() })
+            return false
+        }
+    }
+
+    private fun doModeChange(newMode: Boolean) {
+        prefs().currentMode = newMode
+        sendLocalBroadcast(Intent(ACTION_MODE_SWITCH))
+    }
+
+    @SuppressLint("CheckResult")
+    override fun handlePhotoDir(data: Uri) {
+        //take persistent read permission for the uri
+        MyApp.AppCtx.contentResolver.takePersistableUriPermission(data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        var enableLocalMode = false
+        val iterateObservable = iterateLocalPhotoDir(data, true) ?: return
+        iterateObservable.map {
+            if (it) enableLocalMode = true
+        }.observeOn(AndroidSchedulers.mainThread()).subscribe(Functions.emptyConsumer(), Functions.ON_ERROR_MISSING, Action {
+            if (enableLocalMode || !prefs().currentMode) {
+                view.layoutAdjustForModeSwitch(false)
+                Log.w(TAG, "handlePhotoDir: onComplete mode = ${prefs().currentMode}")
+                doModeChange(false)
+            } else {
+                view.toast(getMyString(R.string.cannot_find_valid_photo_files))
+            }
+            sendLocalBroadcast(Intent(ACTION_LOCAL_PHOTO_DIRS_ITERATE_DONE))
+        })
     }
 }

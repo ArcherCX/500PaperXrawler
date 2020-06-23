@@ -1,5 +1,6 @@
 package com.archer.s00paperxrawler.db
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.database.Cursor
@@ -12,6 +13,7 @@ import io.reactivex.Observable
 import java.io.File
 
 private const val TAG = "ResolverHelper"
+typealias MyUri = PaperInfoContract.URI
 
 /**下载信息*/
 data class DownloadInfo(val id: Int, val url: String, val photoId: Long)
@@ -29,7 +31,7 @@ enum class ResolverHelper {
 
     private fun getCR(): ContentResolver = getMyAppCtx().contentResolver
 
-    private fun getDBBoolConstant(boolean: Boolean) = if (boolean) PaperInfoContract.DB_VALUE_CONSTANT.TRUE else PaperInfoContract.DB_VALUE_CONSTANT.FALSE
+    private fun getDBBoolConstant(boolean: Boolean) = if (boolean) DB_CONSTANT.TRUE else DB_CONSTANT.FALSE
 
     fun getNSFWSelection(): String? {
         val nsfw = prefs().showNSFW
@@ -39,7 +41,7 @@ enum class ResolverHelper {
     /**获取已下载到本地但未使用的照片*/
     fun getUnusedPhotos(limit: Int = -1): Cursor {
         val sLimit = if (limit > 0) " LIMIT $limit" else ""
-        return getCR().queryAdapter(PaperInfoContract.UNUSED_PHOTOS_URI,
+        return getCR().queryAdapter(MyUri.UNUSED_PHOTOS_URI,
                 selection = getNSFWSelection(),
                 sortOrder = "${BaseColumns._ID}$sLimit")
     }
@@ -48,7 +50,7 @@ enum class ResolverHelper {
      * 未下载的图片信息
      */
     fun getUnDownPhotos(): Cursor {
-        return getCR().queryAdapter(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI, selection = getNSFWSelection())
+        return getCR().queryAdapter(MyUri.UNDOWNLOAD_PHOTOS_URI, selection = getNSFWSelection())
     }
 
     /**
@@ -82,7 +84,7 @@ enum class ResolverHelper {
             if (limit <= 0) {
                 emitter.onComplete()
             } else {
-                val cursor = getCR().query(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI,
+                val cursor = getCR().query(MyUri.UNDOWNLOAD_PHOTOS_URI,
                         arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_URL, PaperInfoColumns.PHOTO_ID),
                         getNSFWSelection(), null, "${BaseColumns._ID} LIMIT $limit")
                 cursor.use {
@@ -96,9 +98,9 @@ enum class ResolverHelper {
     }
 
     /**标记目标图片已下载到本地*/
-    fun setPhotoDownloaded(id: Int, isDownload: Int = PaperInfoContract.DB_VALUE_CONSTANT.TRUE): Int {
+    fun setPhotoDownloaded(id: Int, isDownload: Int = DB_CONSTANT.TRUE): Int {
         val values = ContentValues(1).apply { put(PaperInfoColumns.DOWNLOAD, isDownload) }
-        return getCR().update(PaperInfoContract.UNDOWNLOAD_PHOTOS_URI, values, "${BaseColumns._ID} == $id", null)
+        return getCR().update(MyUri.UNDOWNLOAD_PHOTOS_URI, values, "${BaseColumns._ID} == $id", null)
     }
 
     /**设置图片为已使用*/
@@ -108,10 +110,10 @@ enum class ResolverHelper {
         Runtime.getRuntime().exec("mv ${prefs.photosCachePath}/$id ${prefs.photosHistoryPath}")
         prefs.isCacheEnough = isCacheEnough()
         val values = ContentValues().apply {
-            put(PaperInfoColumns.USED, PaperInfoContract.DB_VALUE_CONSTANT.TRUE)
+            put(PaperInfoColumns.USED, DB_CONSTANT.TRUE)
             put(PaperInfoColumns.SETTLED_DATE, System.currentTimeMillis())
         }
-        return getCR().update(PaperInfoContract.UNUSED_PHOTOS_URI, values, "${PaperInfoColumns.PHOTO_ID} == $id", null)
+        return getCR().update(MyUri.UNUSED_PHOTOS_URI, values, "${PaperInfoColumns.PHOTO_ID} == $id", null)
     }
 
     /**
@@ -121,7 +123,7 @@ enum class ResolverHelper {
     fun addPhotoInfo(detailUrl: String, id: Long, name: String, url: String, ph: String, aspect: Float, nsfw: Boolean) {
 //        Log.d(TAG, "addPhotoInfo() called with: detailUrl = [ $detailUrl ], id = [ $id ], name = [ $name ], url = [ $url ], ph = [ $ph ], aspect = [ $aspect ]")
         ContentValues(6).apply {
-            put(PaperInfoColumns.USED, PaperInfoContract.DB_VALUE_CONSTANT.FALSE)
+            put(PaperInfoColumns.USED, DB_CONSTANT.FALSE)
             if (!TextUtils.isEmpty(detailUrl)) put(PaperInfoColumns.PHOTO_DETAIL_URL, detailUrl)
             if (id > 0) put(PaperInfoColumns.PHOTO_ID, id)
             if (!TextUtils.isEmpty(name)) put(PaperInfoColumns.PHOTO_NAME, name)
@@ -129,16 +131,16 @@ enum class ResolverHelper {
             if (!TextUtils.isEmpty(ph)) put(PaperInfoColumns.PH, ph)
             if (aspect > 0) put(PaperInfoColumns.ASPECT_RATIO, aspect)
             put(PaperInfoColumns.NSFW, nsfw)
-        }.let { getCR().insert(PaperInfoContract.PAPER_INFO_URI, it) }
+        }.let { getCR().insert(MyUri.PAPER_INFO_URI, it) }
     }
 
     /**指定图片是否是nsfw图片*/
     fun isNsfwPhoto(photoId: Long): Boolean {
         if (photoId < 0) return false
-        getCR().queryAdapter(PaperInfoContract.PAPER_INFO_URI, arrayOf(PaperInfoColumns.NSFW), "${PaperInfoColumns.PHOTO_ID} == $photoId").use {
+        getCR().queryAdapter(MyUri.PAPER_INFO_URI, arrayOf(PaperInfoColumns.NSFW), "${PaperInfoColumns.PHOTO_ID} == $photoId").use {
             return if (it.count > 0) {
                 it.moveToNext()
-                it.getInt(0) == PaperInfoContract.DB_VALUE_CONSTANT.TRUE
+                it.getInt(0) == DB_CONSTANT.TRUE
             } else false
         }
     }
@@ -146,5 +148,94 @@ enum class ResolverHelper {
     /**清理指定uri对应表或视图的数据*/
     fun clearTable(uri: Uri): Unit {
         getCR().delete(uri, null, null)
+    }
+
+    /**是否有本地图片信息*/
+    fun hasLocalPhotosInfo(): Boolean {
+        return getCR().queryAdapter(MyUri.LOCAL_PHOTO_INFO_URI, arrayOf(BaseColumns._ID))?.use { it.count > 0 }
+                ?: false
+
+    }
+
+    /**添加本地图片信息*/
+    fun addLocalPhotoInfo(uri: String, name: String?, isDir: Boolean = false, ownerId: Long = -1): Uri? {
+        ContentValues(2).apply {
+            put(PaperInfoColumns.LOCAL_PHOTO_URI, uri)
+            put(PaperInfoColumns.PHOTO_NAME, name)
+            put(PaperInfoColumns.IS_DIR, if (isDir) DB_CONSTANT.TRUE else DB_CONSTANT.FALSE)
+            put(PaperInfoColumns.LOCAL_FILE_OWNER, ownerId)
+        }.run {
+            return getCR().insert(MyUri.LOCAL_PHOTO_INFO_URI, this)
+        }
+    }
+
+    /**重置所有本地图片的"使用"标识字段为false*/
+    fun resetAllLocalPhotoUsedFlag() =
+            getCR().update(MyUri.LOCAL_PHOTO_INFO_URI, ContentValues().apply {
+                put(PaperInfoColumns.USED, DB_CONSTANT.FALSE)
+            }, "${PaperInfoColumns.IS_DIR} == ${DB_CONSTANT.FALSE}", null)
+
+    /**将目标本地图片设置为已使用*/
+    fun setLocalPhotoUsed(id: Long) =
+            getCR().update(MyUri.LOCAL_PHOTO_INFO_URI, ContentValues().apply {
+                put(PaperInfoColumns.USED, DB_CONSTANT.TRUE)
+            }, "${BaseColumns._ID} == $id", null)
+
+    /**获取本地未使用的图片*/
+    @SuppressLint("Recycle")
+    fun getUnusedLocalPhoto(): Cursor =
+            getCR().query(MyUri.LOCAL_PHOTO_INFO_URI,
+                    arrayOf(BaseColumns._ID, PaperInfoColumns.LOCAL_PHOTO_URI),
+                    "${PaperInfoColumns.USED} == ${DB_CONSTANT.FALSE} and ${PaperInfoColumns.IS_DIR} == ${DB_CONSTANT.FALSE}",
+                    null,
+                    "${BaseColumns._ID} LIMIT 1")!!
+
+    /**删除数据库中已不再原地的本地图片信息*/
+    fun deleteUnExistLocalPhoto(id: Long) {
+        getCR().delete(MyUri.LOCAL_PHOTO_INFO_URI, "${BaseColumns._ID} == $id", null)
+    }
+
+    /**
+     * Does this directory already in the db
+     * @return The id of this directory or -1 if it's not exist
+     */
+    fun doesDirExist(uri: String): Long {
+        getCR().query(MyUri.LOCAL_PHOTO_INFO_URI, arrayOf(BaseColumns._ID),
+                "${PaperInfoColumns.IS_DIR} == ${DB_CONSTANT.TRUE} AND ${PaperInfoColumns.LOCAL_PHOTO_URI} == ?",
+                arrayOf(uri), null, null)?.use {
+            if (it.moveToNext()) return it.getLong(0)
+        }
+        return -1L
+    }
+
+    fun getAllLocalDirs() =
+            getCR().queryAdapter(MyUri.LOCAL_PHOTO_INFO_URI, arrayOf(PaperInfoColumns.LOCAL_PHOTO_URI, PaperInfoColumns.PHOTO_NAME, BaseColumns._ID), "${PaperInfoColumns.IS_DIR} == ${DB_CONSTANT.TRUE}")
+
+    /**
+     * @return an array which contains two list, [0] is nameArray, [1] is corresponding idArray
+     */
+    fun getAllLocalDirNames(): Array<ArrayList<String>>? {
+        getAllLocalDirs().use {
+            val count = it.count
+            if (count <= 0) return null
+            val nameArray = arrayListOf<String>()
+            val idArray = arrayListOf<String>()
+            val retArray = arrayOf(nameArray, idArray)
+            while (it.moveToNext()) {
+                val name = it.getString(1)
+                val id = it.getLong(2).toString()
+                nameArray.add(name)
+                idArray.add(id)
+            }
+            return retArray
+        }
+    }
+
+    fun deleteLocalDirsAndPhotos(dirIds: ArrayList<String>): Unit {
+        val cr = getCR()
+        val targetIds = dirIds.toString().removePrefix("[").removeSuffix("]")
+        cr.delete(MyUri.LOCAL_PHOTO_INFO_URI,
+                "${BaseColumns._ID} in ($targetIds) OR ${PaperInfoColumns.LOCAL_FILE_OWNER} in ($targetIds)",
+                null)
     }
 }

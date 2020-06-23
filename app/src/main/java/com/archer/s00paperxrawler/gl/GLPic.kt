@@ -1,9 +1,17 @@
 package com.archer.s00paperxrawler.gl
 
+import android.app.WallpaperManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Rect
+import android.net.Uri
 import android.opengl.GLES20.*
 import android.opengl.GLUtils
+import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.archer.s00paperxrawler.MyApp
+import java.io.FileDescriptor
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -22,12 +30,16 @@ class GLPic : Shape() {
                 .asFloatBuffer()
                 .also { setPosBuffer(it) }
     }
+
     /**图片展示区域的x轴偏移量*/
     private var xOffset = 0F
+
     /**纹理应展示的图片宽度，该宽度基于纹理坐标系计算*/
     private var textureWidth = 1f
+
     /**纹理应展示的图片高度，该宽度基于纹理坐标系计算*/
     private var textureHeight = 1f
+
     /**纹理滑动偏移量范围*/
     private var textureOffsetRange = 0f
     override var viewRatio: Float = 1f
@@ -183,7 +195,7 @@ class GLPic : Shape() {
     }
 
     fun loadBitmap(path: String) {
-        val bitmap = BitmapFactory.decodeFile(path)
+        val bitmap = decodeBitmap(path)
         if (bitmap == null) {
             textures[0] = 0
             return
@@ -199,6 +211,20 @@ class GLPic : Shape() {
         bitmap.recycle()
         glBindTexture(GL_TEXTURE_2D, 0)
     }
+
+    private fun decodeBitmap(path: String): Bitmap? =
+            if (path.startsWith("content://")) {//local file uri string
+                val contentResolver = MyApp.AppCtx.contentResolver
+                val uri = Uri.parse(path)
+                val parcelFileDescriptor: ParcelFileDescriptor =
+                        contentResolver.openFileDescriptor(uri, "r")!!
+                val fileDescriptor: FileDescriptor = parcelFileDescriptor.fileDescriptor
+                val image: Bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor)
+                parcelFileDescriptor.close()
+                image
+            } else
+                BitmapFactory.decodeFile(path)
+
 
     override fun onDestroy() {
         super.onDestroy()
