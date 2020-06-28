@@ -83,7 +83,7 @@ enum class Prefs {
         }
 
     var csrfToken: String
-        get() = pref.getString("csrf_token", "")
+        get() = pref.getString("csrf_token", "")!!
         set(value) = pref.edit().putString("csrf_token", value).apply()
 
     var refreshInterval: Int
@@ -149,16 +149,26 @@ enum class Prefs {
         set(value) = pref.edit().putLong("current_photo_id", if (isCurrentWallPaper) value else -1L).apply()
 
     /**Current local photo id in db*/
-    var currentLocalPhotoId:Long
+    var currentLocalPhotoId: Long
         get() = pref.getLong("local_photo_id", -1L)
-        set(value) = pref.edit().putLong("local_photo_id",value).apply()
+        set(value) = pref.edit().putLong("local_photo_id", value).apply()
 
     /**Current Mode, true:web, false:local*/
-    var currentMode:Boolean
+    var currentMode: Boolean
         get() = pref.getBoolean(getMyString(R.string.mode_key), true)
         set(value) = pref.edit().putBoolean(getMyString(R.string.mode_key), value).apply()
 
-    val parallaxEffectEnabled:Boolean
+    val parallaxEffectEnabled: Boolean
         get() = pref.getBoolean(getMyString(R.string.parallax_effect_key), true)
+
+    val thumbnailDirPath: String
+        get() {
+            var path = pref.getString("thumbnail_dir_path", "")
+            if (TextUtils.isEmpty(path)) {
+                path = File(getMyAppCtx().cacheDir, "thumbnails").apply { if (!exists()) mkdirs() }.absolutePath
+                pref.edit().putString("thumbnail_dir_path", path).apply()
+            }
+            return path!!
+        }
 
 }

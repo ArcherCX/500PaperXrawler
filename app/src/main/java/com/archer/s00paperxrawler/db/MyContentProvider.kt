@@ -55,8 +55,9 @@ class MyContentProvider : ContentProvider() {
             }
             pairUndownloadPhotos.second -> return db.query(VIEWS.VIEW_UNDOWNLOAD_PHOTOS, projection, selection, selectionArgs, null, null, sortOrder)
             pairLocalPhotoInfo.second -> return db.query(TABLES.TABLE_LOCAL_PAPER_INFO, projection, selection, selectionArgs, null, null, sortOrder).apply {
-                setNotificationUri(context?.contentResolver,PaperInfoContract.URI.LOCAL_PHOTO_INFO_URI)
+                setNotificationUri(context?.contentResolver, PaperInfoContract.URI.LOCAL_PHOTO_INFO_URI)
             }
+            pairHistory.second -> return db.query(VIEWS.VIEW_HISTORY, projection, selection, selectionArgs, null, null, sortOrder)
         }
         return null
     }

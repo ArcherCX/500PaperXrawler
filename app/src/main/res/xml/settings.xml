@@ -2,6 +2,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <Preference
+        android:key="@string/app_name_version_key"
+        android:summary="@string/app_name_version_summary"
+        app:iconSpaceReserved="false" />
     <PreferenceCategory
         android:title="@string/category_title_feature_and_category"
         app:iconSpaceReserved="false">
@@ -29,6 +33,11 @@
             android:key="@string/show_nsfw_key"
             android:summary="@string/show_nsfw_summary"
             android:title="@string/show_nsfw_title"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:key="@string/history_key"
+            android:summary="@string/history_summary"
+            android:title="@string/history_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
     <PreferenceCategory

@@ -26,7 +26,7 @@
     <string name="setup_wizard_msg">要使用 &appName; ，你需要在下个页面将 &appName; 设置为你的壁纸</string>
     <string name="show_nsfw_title">工作不宜</string>
     <string name="show_nsfw_summary">是否显示工作不宜的壁纸</string>
-    <string name="feature_category_changed_hint">该设置变更不回立即生效，除非你清除缓存，清除缓存会触发图片更新，请确保已连上Wi-Fi。</string>
+    <string name="feature_category_changed_hint">该设置变更不会立即生效，除非你清除缓存，清除缓存会触发图片更新，请确保已连上Wi-Fi。</string>
     <string name="hint">提示</string>
     <string name="category_conflict_info">裸体分类属于工作不宜，请先打开工作不宜开关。</string>
     <string name="nsfw_conflict_info">你不能在仅选中裸体分类时关闭工作不宜开关。</string>
@@ -45,4 +45,7 @@
     <string name="can_not_delete_all_dir">您不能删除所有文件夹</string>
     <string name="parallax_effect_title">视差效果</string>
     <string name="parallax_effect_summary">当在桌面滑动屏幕时同时滚动壁纸。此功能需要启动器支持，据我所知，三星、华为默认的启动器可能不支持该功能，如果出现壁纸被分割的情况，请关闭此功能。</string>
+    <string name="app_name_version_summary">点击访问Github仓库</string>
+    <string name="history_title">历史</string>
+    <string name="history_summary">访问曾经展示过的图片，仅展示缓存有效的图片</string>
 </resources>

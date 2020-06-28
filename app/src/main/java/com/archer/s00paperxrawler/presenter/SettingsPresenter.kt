@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.text.format.Formatter
 import android.util.Log
+import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -19,6 +20,7 @@ import com.archer.s00paperxrawler.db.PaperInfoContract
 import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.service.*
 import com.archer.s00paperxrawler.utils.*
+import com.archer.s00paperxrawler.view.HistoryBrowserFragment
 import com.archer.s00paperxrawler.view.setNewSummary
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -219,5 +221,18 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
             }
             sendLocalBroadcast(Intent(ACTION_LOCAL_PHOTO_DIRS_ITERATE_DONE))
         })
+    }
+
+    override fun onGithubVisit(fragment: Fragment) {
+        fragment.startActivity(Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://github.com/ArcherCX/500PaperXrawler")
+        })
+    }
+
+    override fun onHistoryBrowse(fragment: Fragment) {
+        val supportFragmentManager = fragment.requireActivity().supportFragmentManager
+        val transaction = supportFragmentManager.beginTransaction()
+        val historyBrowserFragment = HistoryBrowserFragment()
+        transaction.replace(R.id.container,historyBrowserFragment).addToBackStack("history").commit()
     }
 }

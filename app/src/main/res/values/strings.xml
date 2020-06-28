@@ -1,6 +1,12 @@
 <!DOCTYPE resources [<!ENTITY appName "500PaperXrawler">]>
 <resources>
     <string name="app_name" translatable="false">&appName;</string>
+    <string name="app_name_version_key" translatable="false">app_name_version_name</string>
+    <string name="app_name_version_title" translatable="false">&appName; %1$s</string>
+    <string name="app_name_version_summary">Tap to visit github repo.</string>
+    <string name="history_key" translatable="false">history</string>
+    <string name="history_title">History</string>
+    <string name="history_summary">Access your history of shown photos, only for photos that cache still valid.</string>
     <string name="setup_wizard_title">Setup Wizard</string>
     <string name="setup_wizard_msg">To actually use &appName; , You need set &appName; as your Wallpaper in next screen</string>
     <string name="feature_title">Feature</string>

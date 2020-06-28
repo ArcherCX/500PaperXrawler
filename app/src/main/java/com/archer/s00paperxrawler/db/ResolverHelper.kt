@@ -238,4 +238,10 @@ enum class ResolverHelper {
                 "${BaseColumns._ID} in ($targetIds) OR ${PaperInfoColumns.LOCAL_FILE_OWNER} in ($targetIds)",
                 null)
     }
+
+    fun getWebHistory() =
+        getCR().queryAdapter(MyUri.PAPER_HISTORY_URI,
+                arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
+                null, null, "${PaperInfoColumns.SETTLED_DATE} ASC")
+
 }

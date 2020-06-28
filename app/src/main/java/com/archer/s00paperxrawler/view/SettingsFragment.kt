@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.preference.*
+import com.archer.s00paperxrawler.BuildConfig
 import com.archer.s00paperxrawler.R
 import com.archer.s00paperxrawler.contract.REQUEST_CODE_CHANGE_LIVE_WALLPAPER
 import com.archer.s00paperxrawler.contract.REQUEST_CODE_START_IMAGE_PICKER
@@ -52,6 +53,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings, rootKey)
+        findPreference<Preference>(getString(R.string.app_name_version_key))!!.also {
+            it.title = getString(R.string.app_name_version_title,BuildConfig.VERSION_NAME)
+            it.onPreferenceClickListener = this
+        }
         modePreference = findPreference<SwitchPreference>(getString(R.string.mode_key))!!.also {
             it.preferenceDataStore = preferenceDataStore
             it.onPreferenceChangeListener = this
@@ -92,6 +97,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
             webModePreferenceSet.add(it)
             it.onPreferenceChangeListener = this
         }
+        findPreference<Preference>(getString(R.string.history_key))!!.also {
+            webModePreferenceSet.add(it)
+            it.onPreferenceClickListener = this
+        }
         findPreference<Preference>(getString(R.string.clear_history_key))!!.let { it.onPreferenceClickListener = this }
         val currentMode = prefs().currentMode
         webModePreferenceSet.forEach { it.isVisible = currentMode }
@@ -105,6 +114,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
 
     override fun onPreferenceClick(preference: Preference?): Boolean {
         when (preference?.key) {
+            getString(R.string.app_name_version_key) -> presenter.onGithubVisit(this)
+            getString(R.string.history_key) -> presenter.onHistoryBrowse(this)
             getString(R.string.clear_cache_key) -> presenter.onPrepareClearCacheDialog()
             getString(R.string.clear_history_key) -> presenter.onPrepareClearHistoryDialog()
             getString(R.string.open_config_key) -> presenter.openLiveWallpaperConfig(this)
@@ -163,7 +174,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
 
     override fun startImagePicker() {
         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }.let { startActivityForResult(it, REQUEST_CODE_START_IMAGE_PICKER) }
     }
 
