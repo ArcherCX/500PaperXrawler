@@ -2,6 +2,7 @@ package com.archer.s00paperxrawler.view
 
 import android.database.Cursor
 import android.os.Bundle
+import android.provider.BaseColumns
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -36,8 +37,7 @@ class HistoryBrowserFragment : ListFragment() {
             viewBinder = MyViewBinder()
         }
         Observable.create<Cursor> {
-            /*0:_id, 1:photo name, 2:photographer, 3:photo id*/
-            historyCursor = ResolverHelper.INSTANCE.getWebHistory()
+            historyCursor = ResolverHelper.INSTANCE.getWebHistory(arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID))
             Log.i(TAG, "onActivityCreated() called history cursor = $historyCursor")
             it.onNext(historyCursor)
             it.onComplete()

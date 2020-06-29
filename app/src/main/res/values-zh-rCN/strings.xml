@@ -48,4 +48,5 @@
     <string name="app_name_version_summary">点击访问Github仓库</string>
     <string name="history_title">历史</string>
     <string name="history_summary">访问曾经展示过的图片，仅展示缓存有效的图片</string>
+    <string name="five_hundred_px_logo_title">前往500px</string>
 </resources>

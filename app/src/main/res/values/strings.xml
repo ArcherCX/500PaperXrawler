@@ -73,4 +73,5 @@
     <string name="parallax_effect_key" translatable="false">parallax_effect</string>
     <string name="parallax_effect_title">Parallax Effect</string>
     <string name="parallax_effect_summary">Move wallpaper around when swiping through home screens.Requires support from the launcher application. As I know, samsung、huawei default launcher may not support, if the wallpaper divided, please turn off this effect.</string>
+    <string name="five_hundred_px_logo_title">Goto 500px</string>
 </resources>

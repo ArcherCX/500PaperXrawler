@@ -231,7 +231,7 @@ enum class ResolverHelper {
         }
     }
 
-    fun deleteLocalDirsAndPhotos(dirIds: ArrayList<String>): Unit {
+    fun deleteLocalDirsAndPhotos(dirIds: ArrayList<String>) {
         val cr = getCR()
         val targetIds = dirIds.toString().removePrefix("[").removeSuffix("]")
         cr.delete(MyUri.LOCAL_PHOTO_INFO_URI,
@@ -239,9 +239,9 @@ enum class ResolverHelper {
                 null)
     }
 
-    fun getWebHistory() =
-        getCR().queryAdapter(MyUri.PAPER_HISTORY_URI,
-                arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
-                null, null, "${PaperInfoColumns.SETTLED_DATE} ASC")
+    fun getWebHistory(projection: Array<String>?) =
+            getCR().queryAdapter(MyUri.PAPER_HISTORY_URI,
+                    projection,
+                    null, null, "${PaperInfoColumns.SETTLED_DATE} ASC")
 
 }
