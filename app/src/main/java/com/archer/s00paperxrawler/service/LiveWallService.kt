@@ -1,5 +1,6 @@
 package com.archer.s00paperxrawler.service
 
+import android.app.PendingIntent
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,6 +9,8 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import com.archer.s00paperxrawler.ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL
+import com.archer.s00paperxrawler.MainActivity
 import com.archer.s00paperxrawler.gl.GLRenderer
 import com.archer.s00paperxrawler.gl.OpenGLES2WallpaperService
 import com.archer.s00paperxrawler.registerLocalBCR
@@ -47,13 +50,13 @@ class LiveWallService : OpenGLES2WallpaperService() {
     }
 
 
-    inner class MyEngine : OpenGLES2Engine(), GestureDetector.OnThreeTouchListener {
+    inner class MyEngine : OpenGLES2Engine(), GestureDetector.OnTouchEventListener {
         private lateinit var engineImpl: IEngineImpl
         private lateinit var timer: Disposable
         private lateinit var webEngineImpl: IEngineImpl
         private lateinit var localEngineImpl: IEngineImpl
         private val receiver: BroadcastReceiver
-        private val gestureDetector = GestureDetector().apply { onThreeTouchListener = this@MyEngine }
+        private val gestureDetector = GestureDetector(this)
 
         init {
             val prefs = prefs()
@@ -111,6 +114,8 @@ class LiveWallService : OpenGLES2WallpaperService() {
 
         private fun refreshWallpaper(interval: Long = prefs().refreshInterval.toLong()) {
             Log.d(TAG, "refreshWallpaper() called with: interval = [ $interval ]")
+            prefs().hasCustomOffset = false
+            prefs().customOffsetValue = 0F
             if (::timer.isInitialized) timer.dispose()
             timer = Observable.timer(interval, TimeUnit.SECONDS).subscribe {
                 refreshWallpaper()
@@ -126,6 +131,22 @@ class LiveWallService : OpenGLES2WallpaperService() {
         override fun onThreeTouchDown(ev: MotionEvent): Boolean {
 //            TODO("解决短时间多次调用的问题")
             refreshWallpaper(0L)
+            return true
+        }
+
+        override fun onDoubleTap(ev: MotionEvent): Boolean {
+            Log.d(TAG, "onDoubleTap() called with: ev = $ev")
+//            if (prefs().currentMode) {
+            //start activity by PendingIntent to get rid of the 5 seconds delay after pressing home button
+            //detail see here : https://stackoverflow.com/questions/5600084/starting-an-activity-from-a-service-after-home-button-pressed-without-the-5-seco
+            Intent(this@LiveWallService, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .setAction(ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL)
+                    .let {
+                        PendingIntent.getActivity(applicationContext, 0, it, PendingIntent.FLAG_CANCEL_CURRENT).send()
+                    }
+
+//            }
             return true
         }
 

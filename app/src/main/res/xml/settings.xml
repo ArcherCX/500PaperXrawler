@@ -105,11 +105,24 @@
             android:title="@string/clear_history_title"
             app:iconSpaceReserved="false" />
 
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/control_title"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false">
         <Preference
-            android:enabled="false"
+            android:enabled="true"
             android:summary="@string/skip_summary"
             android:title="@string/skip_title"
-            app:allowDividerAbove="true"
+            app:allowDividerAbove="false"
             app:iconSpaceReserved="false" />
+
+        <Preference
+            android:enabled="true"
+            android:summary="@string/double_tap_summary"
+            android:title="@string/double_tap_title"
+            app:allowDividerAbove="false"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 </PreferenceScreen>

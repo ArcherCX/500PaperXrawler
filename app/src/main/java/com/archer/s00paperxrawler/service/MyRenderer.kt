@@ -45,6 +45,7 @@ class MyRenderer : GLRenderer {
         Log.d(TAG, "onSurfaceChanged() called with: gl = [ $gl ], width = [ $width ], height = [ $height ]")
         GLES20.glViewport(0, 0, width, height)
         pic.viewRatio = width / height.toFloat()
+        prefs().wallPaperViewRatio = pic.viewRatio
         Matrix.orthoM(mProjectionMatrix, 0, -1f, 1f, -1f, 1f, -1f, 1f)
         /*eye坐标是视点坐标，但是使用正交投影就无所谓eye.z的值，投射后大小不变，如果使用锥视投影frustum，配合lookAt的near，
         far可以产生不同大小的投影而不需要修改图片大小，center坐标是焦点中心，up坐标控制投影图的方向，可以产生图片的旋转效果*/

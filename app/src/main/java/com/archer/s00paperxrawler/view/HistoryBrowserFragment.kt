@@ -2,6 +2,7 @@ package com.archer.s00paperxrawler.view
 
 import android.database.Cursor
 import android.os.Bundle
+import android.os.Parcelable
 import android.provider.BaseColumns
 import android.util.Log
 import android.view.View
@@ -28,35 +29,44 @@ private const val TAG = "HistoryBrowserFragment"
 class HistoryBrowserFragment : ListFragment() {
     private lateinit var cursorAdapter: SimpleCursorAdapter
     private lateinit var historyCursor: Cursor
+    private lateinit var listviewState: Parcelable
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        cursorAdapter = SimpleCursorAdapter(requireContext(), R.layout.history_item_layout, null,
-                arrayOf(PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
-                intArrayOf(R.id.photo_name_tv, R.id.photographer_tv, R.id.thumbnail_iv), 0).apply {
-            viewBinder = MyViewBinder()
+        if (!::cursorAdapter.isInitialized) {
+            cursorAdapter = SimpleCursorAdapter(requireContext(), R.layout.history_item_layout, null,
+                    arrayOf(PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
+                    intArrayOf(R.id.photo_name_tv, R.id.photographer_tv, R.id.thumbnail_iv), 0).apply {
+                viewBinder = MyViewBinder()
+            }
         }
-        Observable.create<Cursor> {
-            historyCursor = ResolverHelper.INSTANCE.getWebHistory(arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID))
-            Log.i(TAG, "onActivityCreated() called history cursor = $historyCursor")
-            it.onNext(historyCursor)
-            it.onComplete()
-        }.subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread()).map {
-            cursorAdapter.changeCursor(it)
-            listAdapter = cursorAdapter
-        }.subscribe()
+        if (!::historyCursor.isInitialized) {
+            Observable.create<Cursor> {
+                historyCursor = ResolverHelper.INSTANCE.getWebHistory(arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID))
+                Log.i(TAG, "onActivityCreated() called history cursor = $historyCursor")
+                it.onNext(historyCursor)
+                it.onComplete()
+            }.subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread()).map {
+                cursorAdapter.changeCursor(it)
+                listAdapter = cursorAdapter
+            }.subscribe()
+        }
+        if (::listviewState.isInitialized) {
+            listView.onRestoreInstanceState(listviewState)
+        }
     }
 
     override fun onDestroyView() {
+        listviewState = listView.onSaveInstanceState()!!
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         if (::cursorAdapter.isInitialized) {
             cursorAdapter.changeCursor(null)
         }
-        if (::historyCursor.isInitialized) {
-            historyCursor.close()
-        }
-
     }
 
     inner class MyViewBinder : SimpleCursorAdapter.ViewBinder {

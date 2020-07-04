@@ -244,4 +244,12 @@ enum class ResolverHelper {
                     projection,
                     null, null, "${PaperInfoColumns.SETTLED_DATE} ASC")
 
+    fun getCurrentWebPhotoDetail(projection: Array<String>?) =
+            getCR().queryAdapter(MyUri.PAPER_INFO_URI, projection,
+                    "${PaperInfoColumns.PHOTO_ID} == ${prefs().currentPhotoId}")
+
+    fun getCurrentLocalPhotoDetail(projection: Array<String>?) =
+            getCR().queryAdapter(MyUri.LOCAL_PHOTO_INFO_URI, projection,
+                    "${BaseColumns._ID} == ${prefs().currentLocalPhotoId}")
+
 }

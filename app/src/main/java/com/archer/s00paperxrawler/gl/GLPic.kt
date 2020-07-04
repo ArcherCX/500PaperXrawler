@@ -1,16 +1,14 @@
 package com.archer.s00paperxrawler.gl
 
-import android.app.WallpaperManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Rect
 import android.net.Uri
 import android.opengl.GLES20.*
 import android.opengl.GLUtils
-import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.archer.s00paperxrawler.MyApp
+import com.archer.s00paperxrawler.utils.prefs
 import java.io.FileDescriptor
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -119,7 +117,7 @@ class GLPic : Shape() {
         posArray[10] = textureWidth + xOffset
         posArray[14] = textureWidth + xOffset
         posArray[15] = textureHeight
-        Log.i(TAG, "posArray[14] = ${posArray[14]}, textureWidth = $textureWidth, xOffset = $xOffset")
+        Log.i(TAG, "posArray[14] = ${posArray[14]}, textureWidth = $textureWidth, textureHeight = $textureHeight, xOffset = $xOffset")
         return posArray
     }
 
@@ -195,7 +193,11 @@ class GLPic : Shape() {
     }
 
     fun loadBitmap(path: String) {
-        val bitmap = decodeBitmap(path)
+        val bitmap = decodeBitmap(path)?.let {
+            prefs().currentPhotoWidth = it.width
+            prefs().currentPhotoHeight = it.height
+            return@let cropBitmap(it)
+        }
         if (bitmap == null) {
             textures[0] = 0
             return
@@ -224,6 +226,20 @@ class GLPic : Shape() {
                 image
             } else
                 BitmapFactory.decodeFile(path)
+
+    private fun cropBitmap(source: Bitmap): Bitmap {
+        if (!prefs().hasCustomOffset) return source
+        val customOffsetValue = prefs().customOffsetValue
+        val croppedBitmap = if (prefs().customOffsetAxis) {
+            Bitmap.createBitmap(source, (source.width * customOffsetValue).toInt(), 0, (source.width * (1 - customOffsetValue)).toInt(), source.height)
+        } else {
+            Bitmap.createBitmap(source, 0, (source.height * customOffsetValue).toInt(), source.width, (source.height * (1 - customOffsetValue)).toInt())
+        }
+        Log.d(TAG, "customOffsetValue = $customOffsetValue , cropBitmap() called with: source w = ${source.width} , h =${source.height}")
+        Log.i(TAG, "cropBitmap() called with: cropped w = ${croppedBitmap.width} , h =${croppedBitmap.height}")
+        if (croppedBitmap != source) source.recycle()
+        return croppedBitmap
+    }
 
 
     override fun onDestroy() {

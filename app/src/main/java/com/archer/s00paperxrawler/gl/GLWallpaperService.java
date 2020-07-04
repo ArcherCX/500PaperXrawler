@@ -16,6 +16,10 @@
 
 package com.archer.s00paperxrawler.gl;
 
+import android.service.wallpaper.WallpaperService;
+import android.util.Log;
+import android.view.SurfaceHolder;
+
 import java.io.Writer;
 import java.util.ArrayList;
 
@@ -29,10 +33,6 @@ import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 //import android.opengl.GLSurfaceView.Renderer;
-import android.opengl.GLSurfaceView;
-import android.service.wallpaper.WallpaperService;
-import android.util.Log;
-import android.view.SurfaceHolder;
 
 // Original code provided by Robert Green
 // http://www.rbgrn.net/content/354-glsurfaceview-adapted-3d-live-wallpapers
@@ -327,7 +327,7 @@ interface GLWrapper {
 }
 
 class EglHelper {
-
+    private static final String TAG = "EglHelper";
     private EGL10 mEgl;
     private EGLDisplay mEglDisplay;
     private EGLSurface mEglSurface;
@@ -466,7 +466,11 @@ class EglHelper {
      * @return false if the context has been lost.
      */
     public boolean swap() {
-        mEgl.eglSwapBuffers(mEglDisplay, mEglSurface);
+        if (mEglDisplay != null && mEglSurface != null) {
+            mEgl.eglSwapBuffers(mEglDisplay, mEglSurface);
+        } else {
+            Log.e(TAG, "Warning !!!! swap() when mEglDisplay = " + mEglDisplay + " , mEglSurface = " + mEglSurface);
+        }
 
         /*
          * Always check for EGL_CONTEXT_LOST, which means the context and all

@@ -1,0 +1,4 @@
+<!DOCTYPE resources [<!ENTITY appName "1_500PaperXrawler_Debug">]>
+<resources>
+    <string name="app_name" translatable="false">&appName;</string>
+</resources>

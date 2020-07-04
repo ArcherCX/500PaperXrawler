@@ -6,11 +6,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.BaseColumns
 import android.util.Log
-import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -101,7 +99,7 @@ class HistoryDetailFragment(private val initPos: Int) : Fragment(R.layout.histor
     }
 }
 
-class HistoryDetailItemFragment(val photoName: String, val photographer: String, val photoPath: String) : Fragment(R.layout.history_detail_item_layout) {
+class HistoryDetailItemFragment(private val photoName: String, private val photographer: String, private val photoPath: String) : Fragment(R.layout.history_detail_item_layout) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

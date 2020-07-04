@@ -2,4 +2,5 @@
 <resources>
     <dimen name="seek_bar_padding_top_increment">20dp</dimen>
     <dimen name="history_item_height">90dp</dimen>
+    <dimen name="double_tap_photo_detail_iv_border">1dp</dimen>
 </resources>

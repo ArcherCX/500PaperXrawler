@@ -74,4 +74,9 @@
     <string name="parallax_effect_title">Parallax Effect</string>
     <string name="parallax_effect_summary">Move wallpaper around when swiping through home screens.Requires support from the launcher application. As I know, samsung、huawei default launcher may not support, if the wallpaper divided, please turn off this effect.</string>
     <string name="five_hundred_px_logo_title">Goto 500px</string>
+    <string name="first_in_double_tap_photo_detail_msg">You can drag the photo to adjust the photo\'s start of show area.</string>
+    <string name="double_tap_photo_detail_load_res_failed">Sorry, failed to load this photo.</string>
+    <string name="control_title">Control</string>
+    <string name="double_tap_title">Open Photo Detail Page</string>
+    <string name="double_tap_summary">Double tap the wallpaper to open the photo\'s detail page.</string>
 </resources>

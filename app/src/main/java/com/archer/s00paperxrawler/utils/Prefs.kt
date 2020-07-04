@@ -90,9 +90,10 @@ enum class Prefs {
         get() = pref.getInt(getMyString(R.string.refresh_interval_key), getMyString(R.string.refresh_interval_default).toInt()) * 1800
         set(value) = pref.edit().putInt(getMyString(R.string.refresh_interval_key), value).apply()
 
-    val screenAspectRatio: Float
+    /**Valid wallpaper view area ratio: w/h */
+    var wallPaperViewRatio: Float
         get() {
-            var aspect = pref.getFloat("screen_aspect_ratio", -1F)
+            var aspect = pref.getFloat("wallpaper_view_ratio", -1F)
             if (aspect == -1F) {
                 val wm = getMyAppCtx().getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val point = Point()
@@ -100,10 +101,11 @@ enum class Prefs {
                 val w = point.x.toFloat()
                 val h = point.y
                 aspect = w / h
-                pref.edit().putFloat("screen_aspect_ratio", aspect).apply()
+                pref.edit().putFloat("wallpaper_view_ratio", aspect).apply()
             }
             return aspect
         }
+        set(value) = pref.edit().putFloat("wallpaper_view_ratio", value).apply()
 
     /**当前要查询的图片所在页数，每天重置*/
     var currentPage: Int
@@ -161,14 +163,31 @@ enum class Prefs {
     val parallaxEffectEnabled: Boolean
         get() = pref.getBoolean(getMyString(R.string.parallax_effect_key), true)
 
-    val thumbnailDirPath: String
-        get() {
-            var path = pref.getString("thumbnail_dir_path", "")
-            if (TextUtils.isEmpty(path)) {
-                path = File(getMyAppCtx().cacheDir, "thumbnails").apply { if (!exists()) mkdirs() }.absolutePath
-                pref.edit().putString("thumbnail_dir_path", path).apply()
-            }
-            return path!!
-        }
+    /**Is first in the [DoubleTapPhotoDetailFragment][com.archer.s00paperxrawler.view.DoubleTapPhotoDetailFragment]*/
+    var isFirstInDoubleTapDetail: Boolean
+        get() = pref.getBoolean("first_in_double_tap_detail_fragment", true)
+        set(value) = pref.edit().putBoolean("first_in_double_tap_detail_fragment", value).apply()
+
+    var hasCustomOffset: Boolean
+        get() = pref.getBoolean("has_custom_offset", false)
+        set(value) = pref.edit().putBoolean("has_custom_offset", value).apply()
+
+    /**the offset axis, true: X, false: Y*/
+    var customOffsetAxis: Boolean
+        get() = pref.getBoolean("custom_offset_axis", true)
+        set(value) = pref.edit().putBoolean("custom_offset_axis", value).apply()
+
+    /**the value of the offset, it's percentage of photo's width(or height) */
+    var customOffsetValue: Float
+        get() = pref.getFloat("custom_offset_value", 0F)
+        set(value) = pref.edit().putFloat("custom_offset_value", value).apply()
+
+    var currentPhotoWidth: Int
+        get() = pref.getInt("current_photo_width", 0)
+        set(value) = pref.edit().putInt("current_photo_width", value).apply()
+
+    var currentPhotoHeight: Int
+        get() = pref.getInt("current_photo_height", 0)
+        set(value) = pref.edit().putInt("current_photo_height", value).apply()
 
 }

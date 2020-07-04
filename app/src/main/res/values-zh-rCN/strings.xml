@@ -49,4 +49,9 @@
     <string name="history_title">历史</string>
     <string name="history_summary">访问曾经展示过的图片，仅展示缓存有效的图片</string>
     <string name="five_hundred_px_logo_title">前往500px</string>
+    <string name="first_in_double_tap_photo_detail_msg">你可以拖动照片来调整它的显示区域的起始边界。</string>
+    <string name="double_tap_photo_detail_load_res_failed">抱歉，加载该照片失败。</string>
+    <string name="control_title">控制</string>
+    <string name="double_tap_title">打开照片详情页</string>
+    <string name="double_tap_summary">单指双击壁纸以打开照片详情页。</string>
 </resources>

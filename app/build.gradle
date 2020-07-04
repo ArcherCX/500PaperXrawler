@@ -23,7 +23,11 @@ android {
     }
     buildTypes {
         debug {
-            buildConfigField('String', 'CONTENT_PROVIDER_AUTHORITY', "\"${authority}\"")
+            applicationIdSuffix ".debug"
+            buildConfigField('String', 'CONTENT_PROVIDER_AUTHORITY', "\"${authority}.debug\"")
+            manifestPlaceholders = [
+                    CONTENT_PROVIDER_AUTHORITY: "${authority}.debug"
+            ]
         }
         sslDebug.initWith(buildTypes.debug)
         sslDebug {
@@ -39,6 +43,7 @@ android {
         }
     }
     sourceSets {
+        debug { setRoot 'src/Debug' }
         sslDebug { setRoot 'src/sslDebug' }
     }
     applicationVariants.all { variant ->
@@ -90,6 +95,7 @@ dependencies {
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation 'com.google.android.material:material:1.1.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 //    testImplementation 'junit:junit:4.12'
 //    androidTestImplementation 'androidx.test:runner:1.1.1'
