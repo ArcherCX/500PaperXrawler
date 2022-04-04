@@ -86,12 +86,12 @@ class GestureDetector {
     private var flagDoubleTap: Byte = INVALID_FLAG
 
     private inner class GestureHandler : Handler {
-        constructor() : super()
+        constructor() : super(Looper.myLooper()!!)
         constructor(looper: Looper) : super(looper)
 
-        override fun handleMessage(msg: Message?) {
-            Log.w(TAG, "handleMessage: MSG what = ${msg?.what}")
-            when (msg?.what) {
+        override fun handleMessage(msg: Message) {
+            Log.w(TAG, "handleMessage: MSG what = ${msg.what}")
+            when (msg.what) {
                 MSG_THIRD_TOUCH_DOWN -> {
                     Log.w(TAG, "handleMessage: MSG_THIRD_TOUCH_DOWN")
                     val ev = msg.obj as MotionEvent

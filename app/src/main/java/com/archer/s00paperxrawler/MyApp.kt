@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import java.io.File
+import kotlin.system.exitProcess
 
 fun getMyAppCtx(): Context = MyApp.AppCtx
 fun getMyString(id: Int, vararg args: String): String = getMyAppCtx().getString(id, *args)
@@ -27,5 +29,14 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppCtx = applicationContext
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            File(
+                getExternalFilesDir(null),
+                "${getMyString(R.string.app_name)}_crash.log"
+            ).printWriter().use {
+                e.printStackTrace(it)
+            }
+            exitProcess(0)
+        }
     }
 }

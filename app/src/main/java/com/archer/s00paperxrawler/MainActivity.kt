@@ -64,8 +64,8 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        item?.itemId!!.let {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        item.itemId.let {
             return menuActions?.invoke(it) ?: false
         }
     }

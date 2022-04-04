@@ -62,14 +62,27 @@ class MyContentProvider : ContentProvider() {
         return null
     }
 
-    override fun insert(uri: Uri, values: ContentValues): Uri? {
+    override fun insert(uri: Uri, values: ContentValues?): Uri? {
         val db = getWritableDB()
         var id = 0L
         when (uriMatcher.match(uri)) {
-            pairPaperInfo.second -> id = db.insertWithOnConflict(TABLES.TABLE_PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+            pairPaperInfo.second -> id = db.insertWithOnConflict(
+                TABLES.TABLE_PAPER_INFO,
+                null,
+                values,
+                SQLiteDatabase.CONFLICT_IGNORE
+            )
             pairLocalPhotoInfo.second -> {
-                id = db.insertWithOnConflict(TABLES.TABLE_LOCAL_PAPER_INFO, null, values, SQLiteDatabase.CONFLICT_IGNORE)
-                if (id > 0) context?.contentResolver?.notifyChange(PaperInfoContract.URI.LOCAL_PHOTO_INFO_URI, null)
+                id = db.insertWithOnConflict(
+                    TABLES.TABLE_LOCAL_PAPER_INFO,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_IGNORE
+                )
+                if (id > 0) context?.contentResolver?.notifyChange(
+                    PaperInfoContract.URI.LOCAL_PHOTO_INFO_URI,
+                    null
+                )
             }
         }
         if (id < 0) {

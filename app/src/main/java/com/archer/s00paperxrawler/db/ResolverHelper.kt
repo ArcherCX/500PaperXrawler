@@ -26,7 +26,7 @@ enum class ResolverHelper {
     INSTANCE;
 
     private fun ContentResolver.queryAdapter(uri: Uri, projection: Array<String>? = null, selection: String? = null, selectionArgs: Array<String>? = null, sortOrder: String? = null): Cursor {
-        return query(uri, projection, selection, selectionArgs, sortOrder)
+        return query(uri, projection, selection, selectionArgs, sortOrder)!!
     }
 
     private fun getCR(): ContentResolver = getMyAppCtx().contentResolver
@@ -73,20 +73,22 @@ enum class ResolverHelper {
     fun getUndownloadPhotosUrl(): Observable<DownloadInfo> {
         return Observable.create<DownloadInfo> { emitter ->
             val prefs = prefs()
-            val size = File(prefs.photosCachePath).list().size
+            val size = File(prefs.photosCachePath).list()!!.size
             val limit =
-                    if (size == 0) prefs.maxCacheSize//如果一张未下，下载最大缓存数量的图片
-                    else {//如果下载过图片，则检查数据库中下载但未使用的图片数量unusedCount，小于minCacheSize就下载（maxCacheSize-unusedCount）张，否则不下载
-                        val unusedCount = getUnusedPhotos().use { it.count }
-                        if (isCacheEnough(unusedCount)) 0
-                        else prefs.maxCacheSize - unusedCount
-                    }
+                if (size == 0) prefs.maxCacheSize//如果一张未下，下载最大缓存数量的图片
+                else {//如果下载过图片，则检查数据库中下载但未使用的图片数量unusedCount，小于minCacheSize就下载（maxCacheSize-unusedCount）张，否则不下载
+                    val unusedCount = getUnusedPhotos().use { it.count }
+                    if (isCacheEnough(unusedCount)) 0
+                    else prefs.maxCacheSize - unusedCount
+                }
             if (limit <= 0) {
                 emitter.onComplete()
             } else {
-                val cursor = getCR().query(MyUri.UNDOWNLOAD_PHOTOS_URI,
-                        arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_URL, PaperInfoColumns.PHOTO_ID),
-                        getNSFWSelection(), null, "${BaseColumns._ID} LIMIT $limit")
+                val cursor = getCR().query(
+                    MyUri.UNDOWNLOAD_PHOTOS_URI,
+                    arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_URL, PaperInfoColumns.PHOTO_ID),
+                    getNSFWSelection(), null, "${BaseColumns._ID} LIMIT $limit"
+                )!!
                 cursor.use {
                     while (it.moveToNext()) {
                         emitter.onNext(DownloadInfo(cursor.getInt(0), cursor.getString(1), cursor.getLong(2)))

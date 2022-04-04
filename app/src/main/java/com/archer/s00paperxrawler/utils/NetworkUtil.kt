@@ -23,12 +23,12 @@ fun registerWifiCallback(ctx: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
         val connectivityManager = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network?) {
+            override fun onAvailable(network: Network) {
                 Log.d(TAG, "onAvailable() called with: network = [ $network ]")
                 onWifiConnected()
             }
 
-            override fun onLost(network: Network?) {
+            override fun onLost(network: Network) {
                 Log.d(TAG, "onLost() called with: network = [ $network ]")
                 onWifiLost()
             }
@@ -42,7 +42,7 @@ fun registerWifiCallback(ctx: Context) {
                 Log.d(TAG, "onReceive() called with: context = [ $context ], intent = [ $intent ]")
                 val connectivityManager = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
                 val activeNetworkInfo = connectivityManager.activeNetworkInfo
-                if ((activeNetworkInfo?.type ?: -1 == ConnectivityManager.TYPE_WIFI) && activeNetworkInfo.isConnected) {
+                if ((activeNetworkInfo?.type ?: -1 == ConnectivityManager.TYPE_WIFI) && activeNetworkInfo?.isConnected == true) {
                     onWifiConnected()
                 } else {
                     onWifiLost()
