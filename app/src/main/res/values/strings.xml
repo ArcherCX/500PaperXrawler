@@ -77,6 +77,15 @@
     <string name="first_in_double_tap_photo_detail_msg">You can drag the photo to adjust the photo\'s start of show area.</string>
     <string name="double_tap_photo_detail_load_res_failed">Sorry, failed to load this photo.</string>
     <string name="control_title">Control</string>
-    <string name="double_tap_title">Open Photo Detail Page</string>
-    <string name="double_tap_summary">Double tap the wallpaper to open the photo\'s detail page.</string>
+    <string name="double_tap_title">Open Wallpaper Detail Page</string>
+    <string name="double_tap_summary">Double tap the wallpaper to open the wallpaper\'s detail page. You can drag the photo to adjust the photo\'s start of show area <b><i><u>temporarily</u></i></b></string>
+    <string name="permanently_enable_custom_offset_key" translatable="false">permanently_enable_custom_offset</string>
+    <string name="permanently_enable_custom_offset_default" translatable="false">false</string>
+    <string name="permanently_enable_custom_offset_title">Adjust Show Area Permanently</string>
+    <string name="permanently_enable_custom_offset_summary">You can adjust the show area of wallpaper in the wallpaper detail page.</string>
+    <string name="open_wallpaper_detail_of_settings_key" translatable="false">open_wallpaper_detail</string>
+    <string name="open_wallpaper_detail_of_settings_title">Open Wallpaper Detail Page</string>
+    <string name="open_wallpaper_detail_of_settings_summary">You can drag the photo to adjust the photo\'s start of show area <b><i><u>permanently</u></i></b></string>
+    <string name="open_wallpaper_detail_page_toast">Need to set &appName;
+        as Wallpaper first.</string>
 </resources>

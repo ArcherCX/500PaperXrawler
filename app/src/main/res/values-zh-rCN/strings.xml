@@ -35,7 +35,7 @@
     <string name="select_local_photo_msg">数据库内没有本地图片信息，请先选择你的壁纸文件夹。</string>
     <string name="select_local_photo_title">请选择文件夹</string>
     <string name="selection_error">抱歉，无法获取有效返回</string>
-    <string name="reading_local_photo_info">正在读取本地图片信息...</string>
+    <string name="reading_local_photo_info">正在读取本地图片信息…</string>
     <string name="cannot_find_valid_photo_files">抱歉，无法在目标文件夹内找到有效图片文件。</string>
     <string name="photo_dirs_title">图片文件夹</string>
     <string name="local_photo_dir_dialog_positive_btn">删除</string>
@@ -53,5 +53,11 @@
     <string name="double_tap_photo_detail_load_res_failed">抱歉，加载该照片失败。</string>
     <string name="control_title">控制</string>
     <string name="double_tap_title">打开照片详情页</string>
-    <string name="double_tap_summary">单指双击壁纸以打开照片详情页。</string>
+    <string name="double_tap_summary">单指双击壁纸以打开壁纸详情页。滑动图片，可<b><i><u>暂时</u></i></b>修改壁纸显示区域的起始边界</string>
+    <string name="open_wallpaper_detail_of_settings_title">打开照片详情页</string>
+    <string name="open_wallpaper_detail_of_settings_summary">打开壁纸详情页，滑动图片，可<b><i><u>永久</u></i></b>修改壁纸显示区域的起始边界。</string>
+    <string name="permanently_enable_custom_offset_title">永久调整壁纸显示区域</string>
+    <string name="permanently_enable_custom_offset_summary">你可以在壁纸详情页面调整壁纸的显示区域。</string>
+    <string name="open_wallpaper_detail_page_toast">需要先将&appName;设置为壁纸。</string>
+
 </resources>

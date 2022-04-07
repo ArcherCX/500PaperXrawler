@@ -7,7 +7,6 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import com.archer.s00paperxrawler.BasePresenter
 import com.archer.s00paperxrawler.BaseView
-import com.archer.s00paperxrawler.view.SettingsFragment
 
 const val REQUEST_CODE_CHANGE_LIVE_WALLPAPER = 10
 const val REQUEST_CODE_START_IMAGE_PICKER = 11
@@ -73,5 +72,8 @@ interface SettingsContract {
 
         /**Open History Browser*/
         fun onHistoryBrowse(fragment: Fragment)
+
+        /**Open Wallpaper Detail Page*/
+        fun onOpenWallpaperDetail(fragment: Fragment)
     }
 }

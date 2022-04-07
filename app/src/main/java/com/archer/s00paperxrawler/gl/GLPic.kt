@@ -24,9 +24,9 @@ class GLPic : Shape() {
     private val posBuffer by lazy {
         Log.d(TAG, "posBuffer lazy allocated")
         ByteBuffer.allocateDirect(16 * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .also { setPosBuffer(it) }
+            .order(ByteOrder.nativeOrder())
+            .asFloatBuffer()
+            .also { setPosBuffer(it) }
     }
 
     /**图片展示区域的x轴偏移量*/
@@ -102,11 +102,11 @@ class GLPic : Shape() {
     }
 
     private val posArray = floatArrayOf(
-            //x,y,s,t
-            -1f, 1f, xOffset, 0f,
-            -1f, -1f, xOffset, textureHeight,
-            1f, 1f, textureWidth + xOffset, 0f,
-            1f, -1f, textureWidth + xOffset, textureHeight
+        //x,y,s,t
+        -1f, 1f, xOffset, 0f,
+        -1f, -1f, xOffset, textureHeight,
+        1f, 1f, textureWidth + xOffset, 0f,
+        1f, -1f, textureWidth + xOffset, textureHeight
     )
 
     /**获取图片绘制坐标缓冲*/
@@ -142,9 +142,9 @@ class GLPic : Shape() {
     }
 
     private val indices = ByteBuffer.allocateDirect(6)
-            .order(ByteOrder.nativeOrder())
-            .put(byteArrayOf(0, 1, 2, 2, 1, 3))
-            .position(0)
+        .order(ByteOrder.nativeOrder())
+        .put(byteArrayOf(0, 1, 2, 2, 1, 3))
+        .position(0)
 
     override fun getVtxShaderSource() = "" +
             "uniform mat4 $glsl_uMatrix;" +
@@ -215,30 +215,36 @@ class GLPic : Shape() {
     }
 
     private fun decodeBitmap(path: String): Bitmap? =
-            if (path.startsWith("content://")) {//local file uri string
-                val contentResolver = MyApp.AppCtx.contentResolver
-                val uri = Uri.parse(path)
-                val parcelFileDescriptor: ParcelFileDescriptor =
-                        contentResolver.openFileDescriptor(uri, "r")!!
-                val fileDescriptor: FileDescriptor = parcelFileDescriptor.fileDescriptor
-                val image: Bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor)
-                parcelFileDescriptor.close()
-                image
-            } else
-                BitmapFactory.decodeFile(path)
+        if (path.startsWith("content://")) {//local file uri string
+            val contentResolver = MyApp.AppCtx.contentResolver
+            val uri = Uri.parse(path)
+            val parcelFileDescriptor: ParcelFileDescriptor =
+                contentResolver.openFileDescriptor(uri, "r")!!
+            val fileDescriptor: FileDescriptor = parcelFileDescriptor.fileDescriptor
+            val image: Bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor)
+            parcelFileDescriptor.close()
+            image
+        } else
+            BitmapFactory.decodeFile(path)
 
     private fun cropBitmap(source: Bitmap): Bitmap {
-        if (!prefs().hasCustomOffset) return source
-        val customOffsetValue = prefs().customOffsetValue
-        val croppedBitmap = if (prefs().customOffsetAxis) {
-            Bitmap.createBitmap(source, (source.width * customOffsetValue).toInt(), 0, (source.width * (1 - customOffsetValue)).toInt(), source.height)
+        val tempEnable = prefs().temporarilyEnableCustomOffset
+        val permanentlyEnable = prefs().permanentlyEnableCustomOffset
+        return if (tempEnable or permanentlyEnable) {// temp priority > permanent priority
+            val customOffsetValue = if (tempEnable) prefs().temporarilyCustomOffsetValue else prefs().permanentCustomOffsetValue
+            val axis = if (tempEnable) prefs().temporarilyCustomOffsetAxis else prefs().permanentCustomOffsetAxis
+            val croppedBitmap = if (axis) {
+                Bitmap.createBitmap(source, (source.width * customOffsetValue).toInt(), 0, (source.width * (1 - customOffsetValue)).toInt(), source.height)
+            } else {
+                Bitmap.createBitmap(source, 0, (source.height * customOffsetValue).toInt(), source.width, (source.height * (1 - customOffsetValue)).toInt())
+            }
+            Log.d(TAG, "customOffsetValue = $customOffsetValue , cropBitmap() called with: source w = ${source.width} , h =${source.height}")
+            Log.i(TAG, "cropBitmap() called with: cropped w = ${croppedBitmap.width} , h =${croppedBitmap.height}")
+            if (croppedBitmap != source) source.recycle()
+            croppedBitmap
         } else {
-            Bitmap.createBitmap(source, 0, (source.height * customOffsetValue).toInt(), source.width, (source.height * (1 - customOffsetValue)).toInt())
+            source
         }
-        Log.d(TAG, "customOffsetValue = $customOffsetValue , cropBitmap() called with: source w = ${source.width} , h =${source.height}")
-        Log.i(TAG, "cropBitmap() called with: cropped w = ${croppedBitmap.width} , h =${croppedBitmap.height}")
-        if (croppedBitmap != source) source.recycle()
-        return croppedBitmap
     }
 
 

@@ -1,5 +1,6 @@
 package com.archer.s00paperxrawler.view
 
+import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
 import android.os.Parcelable
@@ -11,6 +12,8 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.ListFragment
+import com.archer.s00paperxrawler.ACTIVITY_ACTION_HISTORY_DETAIL
+import com.archer.s00paperxrawler.MainActivity
 import com.archer.s00paperxrawler.R
 import com.archer.s00paperxrawler.db.PaperInfoColumns
 import com.archer.s00paperxrawler.db.ResolverHelper
@@ -34,9 +37,11 @@ class HistoryBrowserFragment : ListFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (!::cursorAdapter.isInitialized) {
-            cursorAdapter = SimpleCursorAdapter(requireContext(), R.layout.history_item_layout, null,
-                    arrayOf(PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
-                    intArrayOf(R.id.photo_name_tv, R.id.photographer_tv, R.id.thumbnail_iv), 0).apply {
+            cursorAdapter = SimpleCursorAdapter(
+                requireContext(), R.layout.history_item_layout, null,
+                arrayOf(PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID),
+                intArrayOf(R.id.photo_name_tv, R.id.photographer_tv, R.id.thumbnail_iv), 0
+            ).apply {
                 viewBinder = MyViewBinder()
             }
         }
@@ -90,9 +95,9 @@ class HistoryBrowserFragment : ListFragment() {
 
     override fun onListItemClick(l: ListView, v: View, position: Int, id: Long) {
         super.onListItemClick(l, v, position, id)
-        val supportFragmentManager = requireActivity().supportFragmentManager
-        val transaction = supportFragmentManager.beginTransaction()
-        val historyBrowserFragment = HistoryDetailFragment(position)
-        transaction.replace(R.id.container, historyBrowserFragment).addToBackStack("history_detail").commit()
+        startActivity(Intent(context, MainActivity::class.java).apply {
+            action = ACTIVITY_ACTION_HISTORY_DETAIL
+            putExtras(Bundle().apply { putInt(EXTRA_PHOTO_POSITION, position) })
+        })
     }
 }

@@ -27,17 +27,19 @@ import com.google.android.material.snackbar.Snackbar
 import kotlin.math.absoluteValue
 
 private const val TAG = "DoubleTapPhotoDetailFra"
+const val EXTRAS_WALLPAPER_CHANGE_PERMANENTLY = "extras_wallpaper_change_permanently"
 
 /**
  * Created by Chen Xin on 2020/7/1.
  */
-class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_layout) {
+class PhotoDetailFragment : Fragment(R.layout.photo_detail_layout) {
     private lateinit var detailPageUrl: String
     private lateinit var iv: ImageView
     private var scale = 1F
     private lateinit var target: Target<Drawable>
+    private var permanent: Boolean = false
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "UseRequireInsteadOfGet")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val path = if (prefs().currentMode) {
@@ -45,8 +47,15 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
         } else {
             onViewCreatedForLocalMode(view)
         }
-        prefs().customOffsetValue = 0F
-        prefs().hasCustomOffset = false
+        if (arguments != null) {
+            permanent = arguments!!.getBoolean(EXTRAS_WALLPAPER_CHANGE_PERMANENTLY)
+        }
+        if (permanent) {
+            prefs().permanentCustomOffsetValue = 0F
+        } else {
+            prefs().temporarilyCustomOffsetValue = 0F
+            prefs().temporarilyEnableCustomOffset = false
+        }
         iv = view.findViewById(R.id.detail_photo_iv)
         val gestureDetector = GestureDetector(requireContext(), IvGestureListener())
         iv.setOnTouchListener { _, event ->
@@ -55,18 +64,26 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
         iv.post {
             Log.i(TAG, "onViewCreated: iv.post")
             val finalViewWidth = prefs().wallPaperViewRatio * iv.height
-            target = Glide.with(this@DoubleTapPhotoDetailFragment)
-                    .load(path)
-                    .into(MyViewTarget(finalViewWidth, iv.height.toFloat(), iv))
+            target = Glide.with(this@PhotoDetailFragment)
+                .load(path)
+                .into(MyViewTarget(finalViewWidth, iv.height.toFloat(), iv))
             iv.layoutParams = iv.layoutParams.apply { width = finalViewWidth.toInt() }
         }
         if (prefs().isFirstInDoubleTapDetail) {
             prefs().isFirstInDoubleTapDetail = false
-            Snackbar.make(view, R.string.first_in_double_tap_photo_detail_msg, Snackbar.LENGTH_INDEFINITE).setAction(android.R.string.ok) {}.show()
+            Snackbar.make(
+                view,
+                R.string.first_in_double_tap_photo_detail_msg,
+                Snackbar.LENGTH_INDEFINITE
+            ).setAction(android.R.string.ok) {}.show()
         }
     }
 
-    private inner class MyViewTarget(val finalViewWidth: Float, val finalViewHeight: Float, iv: ImageView) : CustomViewTarget<ImageView, Drawable>(iv) {
+    private inner class MyViewTarget(
+        val finalViewWidth: Float,
+        val finalViewHeight: Float,
+        iv: ImageView
+    ) : CustomViewTarget<ImageView, Drawable>(iv) {
         override fun onLoadFailed(errorDrawable: Drawable?) {
             Toast.makeText(requireContext(), R.string.double_tap_photo_detail_load_res_failed, Toast.LENGTH_SHORT).show()
         }
@@ -75,25 +92,38 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
         }
 
         override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-            Log.d(TAG, "onResourceReady() called with:vw = ${iv.width}, vh = ${iv.height} w = ${resource.intrinsicWidth}, h = ${resource.intrinsicHeight}, resource = $resource, transition = $transition")
+            Log.d(
+                TAG,
+                "onResourceReady() called with:vw = ${iv.width}, vh = ${iv.height} w = ${resource.intrinsicWidth}, h = ${resource.intrinsicHeight}, resource = $resource, transition = $transition"
+            )
             iv.setImageDrawable(resource)
             val currentPhotoWidth = resource.intrinsicWidth
             val currentPhotoHeight = resource.intrinsicHeight
             val photoRatio = currentPhotoWidth / currentPhotoHeight.toFloat()
             val viewRatio = prefs().wallPaperViewRatio
-            scale = if (photoRatio < viewRatio) {//scale base width, make photo's width equal to view width
-                finalViewWidth / currentPhotoWidth
-            } else {//scale base height, make photo's height equal to view height
-                finalViewHeight / currentPhotoHeight
-            }
+            scale =
+                if (photoRatio < viewRatio) {//scale base width, make photo's width equal to view width
+                    finalViewWidth / currentPhotoWidth
+                } else {//scale base height, make photo's height equal to view height
+                    finalViewHeight / currentPhotoHeight
+                }
             iv.imageMatrix = Matrix().apply { setScale(scale, scale) }
         }
 
     }
 
     private fun onViewCreatedForWebMode(view: View): String {
-        (requireActivity() as MainActivity).requestResetMenu(R.menu.history_detail_toolbar_menu, ::onOptionsItemSelected)
-        ResolverHelper.INSTANCE.getCurrentWebPhotoDetail(arrayOf(PaperInfoColumns.PHOTO_DETAIL_URL, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH)).use {
+        (requireActivity() as MainActivity).requestResetMenu(
+            R.menu.history_detail_toolbar_menu,
+            ::onOptionsItemSelected
+        )
+        ResolverHelper.INSTANCE.getCurrentWebPhotoDetail(
+            arrayOf(
+                PaperInfoColumns.PHOTO_DETAIL_URL,
+                PaperInfoColumns.PHOTO_NAME,
+                PaperInfoColumns.PH
+            )
+        ).use {
             it.moveToNext()
             detailPageUrl = "${prefs().baseUri}${it.getString(0)}"
             view.findViewById<TextView>(R.id.detail_photo_name_tv).text = it.getString(1)
@@ -103,7 +133,12 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
     }
 
     private fun onViewCreatedForLocalMode(view: View): String {
-        ResolverHelper.INSTANCE.getCurrentLocalPhotoDetail(arrayOf(PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.LOCAL_PHOTO_URI)).use {
+        ResolverHelper.INSTANCE.getCurrentLocalPhotoDetail(
+            arrayOf(
+                PaperInfoColumns.PHOTO_NAME,
+                PaperInfoColumns.LOCAL_PHOTO_URI
+            )
+        ).use {
             it.moveToNext()
             view.findViewById<TextView>(R.id.detail_photo_name_tv).text = it.getString(0)
             return it.getString(1)
@@ -114,7 +149,9 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
         when (menuId) {
             R.id.action_goto_500px -> {
                 if (detailPageUrl.isNotEmpty()) {
-                    startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(detailPageUrl) })
+                    startActivity(Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(detailPageUrl)
+                    })
                     return true
                 }
             }
@@ -142,6 +179,8 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
         private var adjustX = true
         private var drawableW = 0F
         private var drawableH = 0F
+        private var preOffset = if (permanent) pref.permanentCustomOffsetValue else pref.temporarilyCustomOffsetValue
+        private var newOffset: Float = 0F
 
         override fun onDown(e: MotionEvent?): Boolean {
             Log.d(TAG, "onDown() called with: dw = ${iv.drawable.intrinsicWidth}, dh = ${iv.drawable.intrinsicHeight}")
@@ -157,9 +196,8 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
                 if (newOffsetX != oldOffsetX) {
                     oldOffsetX = newOffsetX
                     iv.imageMatrix = matrix.apply { reset();setTranslate(newOffsetX, 0F);if (scale != 1F) preScale(scale, scale) }
-                    if (newOffsetX != pref.customOffsetValue) {
-                        pref.hasCustomOffset = true
-                        pref.customOffsetValue = newOffsetX.absoluteValue / drawableW
+                    if (newOffsetX != preOffset) {
+                        newOffset = newOffsetX.absoluteValue / drawableW
                     }
                 }
             } else {
@@ -168,11 +206,15 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
                 if (newOffsetY != oldOffsetY) {
                     oldOffsetY = newOffsetY
                     iv.imageMatrix = matrix.apply { reset();setTranslate(0F, newOffsetY);if (scale != 1F) preScale(scale, scale) }
-                    if (newOffsetY != pref.customOffsetValue) {
-                        pref.hasCustomOffset = true
-                        pref.customOffsetValue = newOffsetY.absoluteValue / drawableH
+                    if (newOffsetY != pref.temporarilyCustomOffsetValue) {
+                        newOffset = newOffsetY.absoluteValue / drawableH
                     }
                 }
+            }
+            if (permanent) pref.permanentCustomOffsetValue = newOffset
+            else {
+                pref.temporarilyCustomOffsetValue = newOffset
+                pref.temporarilyEnableCustomOffset = true
             }
             return true
         }
@@ -191,7 +233,8 @@ class DoubleTapPhotoDetailFragment : Fragment(R.layout.double_tap_photo_detail_l
                     adjustX = true
                     minOffsetX = -(drawableW - viewW)
                 }
-                pref.customOffsetAxis = adjustX
+                if (permanent) pref.permanentCustomOffsetAxis = adjustX
+                else pref.temporarilyCustomOffsetAxis = adjustX
             }
         }
     }

@@ -23,17 +23,20 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
 private const val TAG = "HistoryDetailFragment"
+const val EXTRA_PHOTO_POSITION = "extra_photo_position"
 
 /**
  * Created by Chen Xin on 2020/6/27.
  */
-class HistoryDetailFragment(private val initPos: Int) : Fragment(R.layout.history_detail_fragment_layout) {
+class HistoryDetailFragment : Fragment(R.layout.history_detail_fragment_layout) {
+    private var initPos: Int = 0
     private lateinit var cursor: Cursor
     private lateinit var onPageChangeCallback: ViewPager2.OnPageChangeCallback
     private var detailPageUrl = ""
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initPos = requireArguments().getInt(EXTRA_PHOTO_POSITION)
         Observable.create<Cursor> {
             cursor = ResolverHelper.INSTANCE.getWebHistory(arrayOf(BaseColumns._ID, PaperInfoColumns.PHOTO_NAME, PaperInfoColumns.PH, PaperInfoColumns.PHOTO_ID, PaperInfoColumns.PHOTO_DETAIL_URL))
             it.onNext(cursor)

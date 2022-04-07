@@ -12,9 +12,13 @@ import kotlin.system.exitProcess
 
 fun getMyAppCtx(): Context = MyApp.AppCtx
 fun getMyString(id: Int, vararg args: String): String = getMyAppCtx().getString(id, *args)
-private fun getLocalBroadcastManager(): LocalBroadcastManager = LocalBroadcastManager.getInstance(getMyAppCtx())
+private fun getLocalBroadcastManager(): LocalBroadcastManager =
+    LocalBroadcastManager.getInstance(getMyAppCtx())
+
 fun sendLocalBroadcast(intent: Intent) = getLocalBroadcastManager().sendBroadcast(intent)
-fun registerLocalBCR(rec: BroadcastReceiver, filter: IntentFilter) = getLocalBroadcastManager().registerReceiver(rec, filter)
+fun registerLocalBCR(rec: BroadcastReceiver, filter: IntentFilter) =
+    getLocalBroadcastManager().registerReceiver(rec, filter)
+
 fun unregisterLocalBCR(rec: BroadcastReceiver) = getLocalBroadcastManager().unregisterReceiver(rec)
 
 /**
@@ -29,14 +33,16 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppCtx = applicationContext
-        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            File(
-                getExternalFilesDir(null),
-                "${getMyString(R.string.app_name)}_crash.log"
-            ).printWriter().use {
-                e.printStackTrace(it)
+        if (!BuildConfig.DEBUG) {
+            Thread.setDefaultUncaughtExceptionHandler { t, e ->
+                File(
+                    getExternalFilesDir(null),
+                    "${getMyString(R.string.app_name)}_crash.log"
+                ).printWriter().use {
+                    e.printStackTrace(it)
+                }
+                exitProcess(0)
             }
-            exitProcess(0)
         }
     }
 }

@@ -69,11 +69,25 @@
              app:min="@string/storage_cache_min"
              app:seekBarIncrement="@string/storage_cache_increment" />-->
 
+        <SwitchPreference
+            android:defaultValue="@string/permanently_enable_custom_offset_default"
+            android:key="@string/permanently_enable_custom_offset_key"
+            android:summary="@string/permanently_enable_custom_offset_summary"
+            android:title="@string/permanently_enable_custom_offset_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="@string/open_wallpaper_detail_of_settings_key"
+            android:summary="@string/open_wallpaper_detail_of_settings_summary"
+            android:title="@string/open_wallpaper_detail_of_settings_title"
+            app:iconSpaceReserved="false" />
+
         <Preference
             android:key="@string/open_config_key"
             android:summary="@string/open_config_summary"
             android:title="@string/open_config_title"
             app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/misc_title"

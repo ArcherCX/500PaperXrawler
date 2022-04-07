@@ -25,7 +25,8 @@ private const val TAG = "SettingFragment"
 /**
  * Created by Chen Xin on 2019/1/20.
  */
-class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Preference.OnPreferenceChangeListener, Preference.OnPreferenceClickListener {
+class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View,
+    Preference.OnPreferenceChangeListener, Preference.OnPreferenceClickListener {
     override lateinit var presenter: SettingsContract.Presenter
 
     init {
@@ -42,11 +43,18 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
         when (preference?.key) {
             getString(R.string.mode_key) -> return presenter.onModeChange(newValue as Boolean)
-            getString(R.string.feature_key), getString(R.string.categories_key) -> return { presenter.onFeatureCategoryChange(preference, newValue);false }()
+            getString(R.string.feature_key), getString(R.string.categories_key) -> {
+                presenter.onFeatureCategoryChange(preference, newValue)
+                return false
+            }
             getString(R.string.show_nsfw_key) -> return presenter.onNSFWChange(newValue as Boolean)
-            getString(R.string.refresh_interval_key) -> preference.summary = getString(R.string.refresh_interval_summary, newValue as Int * 0.5f)
+            getString(R.string.refresh_interval_key) -> preference.summary =
+                getString(R.string.refresh_interval_summary, newValue as Int * 0.5f)
             getString(R.string.download_via_wifi_key) -> presenter.onDownloadViaWifiChange(newValue as Boolean)
-            getString(R.string.storage_cache_key) -> return (preference as MySeekBarPreference).setNewValueByStep(newValue!! as Int)
+            getString(R.string.storage_cache_key) -> return (preference as MySeekBarPreference).setNewValueByStep(
+                newValue!! as Int
+            )
+            getString(R.string.permanently_enable_custom_offset_key) -> findPreference<Preference>(getString(R.string.open_wallpaper_detail_of_settings_key))?.isVisible = newValue!! as Boolean
         }
         return true
     }
@@ -54,20 +62,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings, rootKey)
         findPreference<Preference>(getString(R.string.app_name_version_key))!!.also {
-            it.title = getString(R.string.app_name_version_title,BuildConfig.VERSION_NAME)
+            it.title = getString(R.string.app_name_version_title, BuildConfig.VERSION_NAME)
             it.onPreferenceClickListener = this
         }
         modePreference = findPreference<SwitchPreference>(getString(R.string.mode_key))!!.also {
             it.preferenceDataStore = preferenceDataStore
             it.onPreferenceChangeListener = this
         }
-        localPhotoDirPreference = findPreference<Preference>(getString(R.string.photo_dirs_key))!!.also {
-            localModePreferenceSet.add(it)
-            val localPhotoDirNames = ResolverHelper.INSTANCE.getAllLocalDirNames()?.get(0)
+        localPhotoDirPreference =
+            findPreference<Preference>(getString(R.string.photo_dirs_key))!!.also {
+                localModePreferenceSet.add(it)
+                val localPhotoDirNames = ResolverHelper.INSTANCE.getAllLocalDirNames()?.get(0)
                     ?: emptyList<String>()
-            if (localPhotoDirNames.isNotEmpty()) it.summary = localPhotoDirNames.toString()
-            it.onPreferenceClickListener = this
-        }
+                if (localPhotoDirNames.isNotEmpty()) it.summary = localPhotoDirNames.toString()
+                it.onPreferenceClickListener = this
+            }
         (findPreference<ListPreference>(getString(R.string.feature_key))!!).let {
             webModePreferenceSet.add(it)
             it.preferenceDataStore = preferenceDataStore
@@ -91,8 +100,20 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
             it.onPreferenceChangeListener = this
             presenter.onDownloadViaWifiChange(it.isChecked)
         }
-        findPreference<Preference>(getString(R.string.clear_cache_key))!!.let { it.onPreferenceClickListener = this }
-        findPreference<Preference>(getString(R.string.open_config_key))!!.let { it.onPreferenceClickListener = this }
+        findPreference<Preference>(getString(R.string.clear_cache_key))!!.let {
+            it.onPreferenceClickListener = this
+        }
+        findPreference<SwitchPreference>(getString(R.string.permanently_enable_custom_offset_key))!!.let {
+            it.preferenceDataStore = preferenceDataStore
+            it.onPreferenceChangeListener = this
+        }
+        findPreference<Preference>(getString(R.string.open_wallpaper_detail_of_settings_key))!!.let {
+            it.onPreferenceClickListener = this
+            it.isVisible = prefs().permanentlyEnableCustomOffset
+        }
+        findPreference<Preference>(getString(R.string.open_config_key))!!.let {
+            it.onPreferenceClickListener = this
+        }
         findPreference<SwitchPreference>(getString(R.string.show_nsfw_key))!!.let {
             webModePreferenceSet.add(it)
             it.onPreferenceChangeListener = this
@@ -101,7 +122,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
             webModePreferenceSet.add(it)
             it.onPreferenceClickListener = this
         }
-        findPreference<Preference>(getString(R.string.clear_history_key))!!.let { it.onPreferenceClickListener = this }
+        findPreference<Preference>(getString(R.string.clear_history_key))!!.let {
+            it.onPreferenceClickListener = this
+        }
         val currentMode = prefs().currentMode
         webModePreferenceSet.forEach { it.isVisible = currentMode }
         localModePreferenceSet.forEach { it.isVisible = !currentMode }
@@ -119,6 +142,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
             getString(R.string.clear_cache_key) -> presenter.onPrepareClearCacheDialog()
             getString(R.string.clear_history_key) -> presenter.onPrepareClearHistoryDialog()
             getString(R.string.open_config_key) -> presenter.openLiveWallpaperConfig(this)
+            getString(R.string.open_wallpaper_detail_of_settings_key) -> presenter.onOpenWallpaperDetail(this)
             getString(R.string.photo_dirs_key) -> {
                 val nameAndId = ResolverHelper.INSTANCE.getAllLocalDirNames()
                 if (nameAndId == null) startImagePicker()
@@ -127,7 +151,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
                     val ids = nameAndId[1]
                     setMultiChoiceItems(names.toTypedArray(), null, null)
                     setPositiveButton(R.string.local_photo_dir_dialog_positive_btn) { dialog, _ ->
-                        val checkedItemPositions = (dialog as AlertDialog).listView.checkedItemPositions
+                        val checkedItemPositions =
+                            (dialog as AlertDialog).listView.checkedItemPositions
                         val size = checkedItemPositions.size()
                         if (size == 0) return@setPositiveButton
                         val checkedIds = arrayListOf<String>()
@@ -140,7 +165,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
                             }
                         }
                         ResolverHelper.INSTANCE.deleteLocalDirsAndPhotos(checkedIds)
-                        localPhotoDirPreference.summary = if (size < ids.size) names.toString() else ""
+                        localPhotoDirPreference.summary =
+                            if (size < ids.size) names.toString() else ""
                     }
                     setNegativeButton(R.string.local_photo_dir_dialog_negative_btn, null)
                     setNeutralButton(R.string.local_photo_dir_dialog_neutral_btn) { _, _ ->
@@ -153,21 +179,34 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
         return false
     }
 
-    override fun showDialog(title: String, msg: String, positiveListener: DialogInterface.OnClickListener?, negativeListener: DialogInterface.OnClickListener?) {
+    override fun showDialog(
+        title: String,
+        msg: String,
+        positiveListener: DialogInterface.OnClickListener?,
+        negativeListener: DialogInterface.OnClickListener?
+    ) {
         if (!::dialog.isInitialized) {
             dialog = AlertDialog.Builder(context)
-                    .setCancelable(true)
-                    .setTitle(title)
-                    .setMessage(msg).apply {
-                        setPositiveButton(android.R.string.ok, positiveListener)
-                        setNegativeButton(android.R.string.cancel, negativeListener)
-                    }.create().apply { setCanceledOnTouchOutside(true) }
+                .setCancelable(true)
+                .setTitle(title)
+                .setMessage(msg).apply {
+                    setPositiveButton(android.R.string.ok, positiveListener)
+                    setNegativeButton(android.R.string.cancel, negativeListener)
+                }.create().apply { setCanceledOnTouchOutside(true) }
         } else {
             if (dialog.isShowing) return
             dialog.setTitle(title)
             dialog.setMessage(msg)
-            dialog.setButton(DialogInterface.BUTTON_POSITIVE, getMyString(android.R.string.ok), positiveListener)
-            dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getMyString(android.R.string.cancel), negativeListener)
+            dialog.setButton(
+                DialogInterface.BUTTON_POSITIVE,
+                getMyString(android.R.string.ok),
+                positiveListener
+            )
+            dialog.setButton(
+                DialogInterface.BUTTON_NEGATIVE,
+                getMyString(android.R.string.cancel),
+                negativeListener
+            )
         }
         dialog.show()
     }
@@ -185,9 +224,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode) {
             REQUEST_CODE_CHANGE_LIVE_WALLPAPER -> {
-                val isOK = resultCode == Activity.RESULT_OK
-                prefs().isCurrentWallPaper = isOK
-                if (!isOK) DownloadService.cancelDownload()
+//                val isOK = resultCode == Activity.RESULT_OK || (WallpaperManager.getInstance(context).wallpaperInfo?.packageName == context?.packageName ?: false)
+//                prefs().isCurrentWallPaper = isOK
+                if (!prefs().isCurrentWallPaper) DownloadService.cancelDownload()
             }
             REQUEST_CODE_START_IMAGE_PICKER -> {
                 if (resultCode == Activity.RESULT_OK) {
@@ -209,8 +248,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsContract.View, Pref
         }
         if (!mode) {
             val localPhotoDirNames = ResolverHelper.INSTANCE.getAllLocalDirNames()?.get(0)
-                    ?: emptyList<String>()
-            localPhotoDirPreference.summary = if (localPhotoDirNames.isNotEmpty()) localPhotoDirNames.toString() else ""
+                ?: emptyList<String>()
+            localPhotoDirPreference.summary =
+                if (localPhotoDirNames.isNotEmpty()) localPhotoDirNames.toString() else ""
         }
     }
 

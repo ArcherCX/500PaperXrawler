@@ -6,9 +6,9 @@ import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.text.format.Formatter
 import android.util.Log
-import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -20,7 +20,7 @@ import com.archer.s00paperxrawler.db.PaperInfoContract
 import com.archer.s00paperxrawler.db.ResolverHelper
 import com.archer.s00paperxrawler.service.*
 import com.archer.s00paperxrawler.utils.*
-import com.archer.s00paperxrawler.view.HistoryBrowserFragment
+import com.archer.s00paperxrawler.view.EXTRAS_WALLPAPER_CHANGE_PERMANENTLY
 import com.archer.s00paperxrawler.view.setNewSummary
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -46,8 +46,9 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
         val prefs = prefs()
         if (prefs.isFirstLaunch) {
             prefs.isFirstLaunch = false
-            view.showDialog(getMyString(R.string.setup_wizard_title), getMyString(R.string.setup_wizard_msg)
-                    , DialogInterface.OnClickListener { _, _ -> openLiveWallpaperConfig(fragment) })
+            view.showDialog(getMyString(R.string.setup_wizard_title),
+                            getMyString(R.string.setup_wizard_msg),
+                            DialogInterface.OnClickListener { _, _ -> openLiveWallpaperConfig(fragment) })
         }
     }
 
@@ -59,43 +60,67 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
                 return
             }
         }
-        view.showDialog(getMyString(R.string.hint), getMyString(R.string.feature_category_changed_hint), DialogInterface.OnClickListener { _, _ ->
-            when (preference) {
-                is ListPreference -> {
-                    preference.setNewSummary(newValue)
-                    preference.value = newValue as String
+        view.showDialog(
+            getMyString(R.string.hint),
+            getMyString(R.string.feature_category_changed_hint),
+            DialogInterface.OnClickListener { _, _ ->
+                when (preference) {
+                    is ListPreference -> {
+                        preference.setNewSummary(newValue)
+                        preference.value = newValue as String
+                    }
+                    is MultiSelectListPreference -> {
+                        preference.setNewSummary(newValue)
+                        preference.values = newValue as MutableSet<String>
+                    }
                 }
-                is MultiSelectListPreference -> {
-                    preference.setNewSummary(newValue)
-                    preference.values = newValue as MutableSet<String>
-                }
-            }
-        })
+            })
     }
 
     override fun onPrepareClearCacheDialog() {
-        onPrepareClearDataDialog(CLEAR_TYPE_CACHE, prefs().photosCachePath, R.string.clear_cache_title, R.string.clear_cache_dialog_msg, ::executeClearCache)
+        onPrepareClearDataDialog(
+            CLEAR_TYPE_CACHE,
+            prefs().photosCachePath,
+            R.string.clear_cache_title,
+            R.string.clear_cache_dialog_msg,
+            ::executeClearCache
+        )
     }
 
     override fun onPrepareClearHistoryDialog() {
-        onPrepareClearDataDialog(CLEAR_TYPE_HISTORY, prefs().photosHistoryPath, R.string.clear_history_title, R.string.clear_history_dialog_msg, ::executeClearHistory)
+        onPrepareClearDataDialog(
+            CLEAR_TYPE_HISTORY,
+            prefs().photosHistoryPath,
+            R.string.clear_history_title,
+            R.string.clear_history_dialog_msg,
+            ::executeClearHistory
+        )
     }
 
-    private fun onPrepareClearDataDialog(type: Int, dataFilePath: String, titleId: Int, msgId: Int, execImpl: () -> Unit) {
+    private fun onPrepareClearDataDialog(
+        type: Int,
+        dataFilePath: String,
+        titleId: Int,
+        msgId: Int,
+        execImpl: () -> Unit
+    ) {
         Observable.just("du -d 0 -h $dataFilePath").observeOn(Schedulers.io()).flatMap { cmd ->
             return@flatMap Observable.just(cmd).map {
                 return@map getCacheSizeByCommand(it)
             }.map {
-                return@map if (it.startsWith("0") && File(dataFilePath).list().isNotEmpty()) getDirSizeByStatistic(dataFilePath)
+                return@map if (it.startsWith("0") && File(dataFilePath).list()
+                        .isNotEmpty()
+                ) getDirSizeByStatistic(dataFilePath)
                 else it
             }.onErrorReturn {
                 return@onErrorReturn getDirSizeByStatistic(dataFilePath)
             }
         }.observeOn(AndroidSchedulers.mainThread()).map {
-            view.showDialog(getMyString(titleId), getMyString(msgId, it)
-                    , DialogInterface.OnClickListener { _, _ ->
-                execImpl()
-            })
+            view.showDialog(getMyString(titleId),
+                            getMyString(msgId, it),
+                            DialogInterface.OnClickListener { _, _ ->
+                                execImpl()
+                            })
         }.subscribe()
     }
 
@@ -153,11 +178,15 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
     override fun openLiveWallpaperConfig(fragment: Fragment) {
         fragment.context?.apply {
             fragment.startActivityForResult(
-                    Intent().also {
-                        it.action = WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER
-                        it.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, ComponentName(this@apply, LiveWallService::class.java))
-                        it.putExtra("SET_LOCKSCREEN_WALLPAPER", true)
-                    }, REQUEST_CODE_CHANGE_LIVE_WALLPAPER)
+                Intent().also {
+                    it.action = WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER
+                    it.putExtra(
+                        WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                        ComponentName(this@apply, LiveWallService::class.java)
+                    )
+                    it.putExtra("SET_LOCKSCREEN_WALLPAPER", true)
+                }, REQUEST_CODE_CHANGE_LIVE_WALLPAPER
+            )
         }
     }
 
@@ -169,7 +198,9 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
                 view.toast(getMyString(R.string.nsfw_conflict_info))
                 return false
             }
-            if (prefs.isCurrentWallPaper && ResolverHelper.INSTANCE.isNsfwPhoto(prefs.currentPhotoId)) sendLocalBroadcast(Intent(ACTION_REFRESH_WALLPAPER))
+            if (prefs.isCurrentWallPaper && ResolverHelper.INSTANCE.isNsfwPhoto(prefs.currentPhotoId)) sendLocalBroadcast(
+                Intent(ACTION_REFRESH_WALLPAPER)
+            )
         }
         return true
     }
@@ -192,8 +223,9 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
                 doModeChange(newMode)
                 return true
             }
-            view.showDialog(getMyString(R.string.select_local_photo_title), getMyString(R.string.select_local_photo_msg),
-                    DialogInterface.OnClickListener { _, _ -> view.startImagePicker() })
+            view.showDialog(getMyString(R.string.select_local_photo_title),
+                            getMyString(R.string.select_local_photo_msg),
+                            DialogInterface.OnClickListener { _, _ -> view.startImagePicker() })
             return false
         }
     }
@@ -206,21 +238,25 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
     @SuppressLint("CheckResult")
     override fun handlePhotoDir(data: Uri) {
         //take persistent read permission for the uri
-        MyApp.AppCtx.contentResolver.takePersistableUriPermission(data, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        MyApp.AppCtx.contentResolver.takePersistableUriPermission(
+            data,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
         var enableLocalMode = false
         val iterateObservable = iterateLocalPhotoDir(data, true) ?: return
         iterateObservable.map {
             if (it) enableLocalMode = true
-        }.observeOn(AndroidSchedulers.mainThread()).subscribe(Functions.emptyConsumer(), Functions.ON_ERROR_MISSING, Action {
-            if (enableLocalMode || !prefs().currentMode) {
-                view.layoutAdjustForModeSwitch(false)
-                Log.w(TAG, "handlePhotoDir: onComplete mode = ${prefs().currentMode}")
-                doModeChange(false)
-            } else {
-                view.toast(getMyString(R.string.cannot_find_valid_photo_files))
-            }
-            sendLocalBroadcast(Intent(ACTION_LOCAL_PHOTO_DIRS_ITERATE_DONE))
-        })
+        }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe(Functions.emptyConsumer(), Functions.ON_ERROR_MISSING, Action {
+                if (enableLocalMode || !prefs().currentMode) {
+                    view.layoutAdjustForModeSwitch(false)
+                    Log.w(TAG, "handlePhotoDir: onComplete mode = ${prefs().currentMode}")
+                    doModeChange(false)
+                } else {
+                    view.toast(getMyString(R.string.cannot_find_valid_photo_files))
+                }
+                sendLocalBroadcast(Intent(ACTION_LOCAL_PHOTO_DIRS_ITERATE_DONE))
+            })
     }
 
     override fun onGithubVisit(fragment: Fragment) {
@@ -230,9 +266,17 @@ class SettingsPresenter(private val view: SettingsContract.View) : SettingsContr
     }
 
     override fun onHistoryBrowse(fragment: Fragment) {
-        val supportFragmentManager = fragment.requireActivity().supportFragmentManager
-        val transaction = supportFragmentManager.beginTransaction()
-        val historyBrowserFragment = HistoryBrowserFragment()
-        transaction.replace(R.id.container,historyBrowserFragment).addToBackStack("history").commit()
+        fragment.startActivity(Intent(fragment.context, MainActivity::class.java).apply { action = ACTIVITY_ACTION_HISTORY })
+    }
+
+    override fun onOpenWallpaperDetail(fragment: Fragment) {
+        if (!prefs().isCurrentWallPaper) {
+            view.toast(getMyString(R.string.open_wallpaper_detail_page_toast))
+            return
+        }
+        fragment.startActivity(Intent(fragment.context, MainActivity::class.java).apply {
+            action = ACTIVITY_ACTION_PHOTO_DETAIL
+            putExtras(Bundle().apply { putBoolean(EXTRAS_WALLPAPER_CHANGE_PERMANENTLY, true) })
+        })
     }
 }

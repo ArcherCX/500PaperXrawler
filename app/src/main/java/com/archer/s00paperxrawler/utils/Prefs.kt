@@ -1,11 +1,12 @@
 package com.archer.s00paperxrawler.utils
 
+import android.app.WallpaperManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Point
-import android.preference.PreferenceManager
 import android.text.TextUtils
 import android.view.WindowManager
+import androidx.preference.PreferenceManager
 import com.archer.s00paperxrawler.R
 import com.archer.s00paperxrawler.getMyAppCtx
 import com.archer.s00paperxrawler.getMyString
@@ -138,9 +139,9 @@ enum class Prefs {
         set(value) = pref.edit().putBoolean("is_first_launch", value).apply()
 
     /**是否当前壁纸应用*/
-    var isCurrentWallPaper: Boolean
-        get() = pref.getBoolean("is_current_wall_paper", false)
-        set(value) = pref.edit().putBoolean("is_current_wall_paper", value).apply()
+    val isCurrentWallPaper: Boolean
+        get() = WallpaperManager.getInstance(getMyAppCtx()).wallpaperInfo?.packageName == getMyAppCtx().packageName ?: false/*pref.getBoolean("is_current_wall_paper", false)*/
+//        set(value) = pref.edit().putBoolean("is_current_wall_paper", value).apply()
 
     val showNSFW: Boolean
         get() = pref.getBoolean(getMyString(R.string.show_nsfw_key), getMyString(R.string.show_nsfw_default).toBoolean())
@@ -163,24 +164,38 @@ enum class Prefs {
     val parallaxEffectEnabled: Boolean
         get() = pref.getBoolean(getMyString(R.string.parallax_effect_key), true)
 
-    /**Is first in the [DoubleTapPhotoDetailFragment][com.archer.s00paperxrawler.view.DoubleTapPhotoDetailFragment]*/
+    /**Is first in the [DoubleTapPhotoDetailFragment][com.archer.s00paperxrawler.view.PhotoDetailFragment]*/
     var isFirstInDoubleTapDetail: Boolean
         get() = pref.getBoolean("first_in_double_tap_detail_fragment", true)
         set(value) = pref.edit().putBoolean("first_in_double_tap_detail_fragment", value).apply()
 
-    var hasCustomOffset: Boolean
-        get() = pref.getBoolean("has_custom_offset", false)
-        set(value) = pref.edit().putBoolean("has_custom_offset", value).apply()
+    var temporarilyEnableCustomOffset: Boolean
+        get() = pref.getBoolean("temporarily_enable_custom_offset", false)
+        set(value) = pref.edit().putBoolean("temporarily_enable_custom_offset", value).apply()
 
     /**the offset axis, true: X, false: Y*/
-    var customOffsetAxis: Boolean
-        get() = pref.getBoolean("custom_offset_axis", true)
-        set(value) = pref.edit().putBoolean("custom_offset_axis", value).apply()
+    var temporarilyCustomOffsetAxis: Boolean
+        get() = pref.getBoolean("temporarily_custom_offset_axis", true)
+        set(value) = pref.edit().putBoolean("temporarily_custom_offset_axis", value).apply()
 
     /**the value of the offset, it's percentage of photo's width(or height) */
-    var customOffsetValue: Float
+    var temporarilyCustomOffsetValue: Float
         get() = pref.getFloat("custom_offset_value", 0F)
         set(value) = pref.edit().putFloat("custom_offset_value", value).apply()
+
+    var permanentlyEnableCustomOffset: Boolean
+        get() = pref.getBoolean("permanently_enable_custom_offset", false)
+        set(value) = pref.edit().putBoolean("permanently_enable_custom_offset", value).apply()
+
+    /**the offset axis, true: X, false: Y*/
+    var permanentCustomOffsetAxis: Boolean
+        get() = pref.getBoolean("permanent_custom_offset_axis", true)
+        set(value) = pref.edit().putBoolean("permanent_custom_offset_axis", value).apply()
+
+    /**the value of the offset, it's percentage of photo's width(or height) */
+    var permanentCustomOffsetValue: Float
+        get() = pref.getFloat("permanent_custom_offset_value", 0F)
+        set(value) = pref.edit().putFloat("permanent_custom_offset_value", value).apply()
 
     var currentPhotoWidth: Int
         get() = pref.getInt("current_photo_width", 0)

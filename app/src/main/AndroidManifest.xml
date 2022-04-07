@@ -22,10 +22,11 @@
         tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTop"
             android:exported="true"
-            android:theme="@style/MyPreferenceTheme">
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/MyPreferenceTheme"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

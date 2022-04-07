@@ -1,15 +1,15 @@
 package com.archer.s00paperxrawler.service
 
 import android.app.PendingIntent
-import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
-import com.archer.s00paperxrawler.ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL
+import com.archer.s00paperxrawler.ACTIVITY_ACTION_PHOTO_DETAIL
 import com.archer.s00paperxrawler.MainActivity
 import com.archer.s00paperxrawler.gl.GLRenderer
 import com.archer.s00paperxrawler.gl.OpenGLES2WallpaperService
@@ -46,7 +46,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
     override fun onDestroy() {
         Log.d(TAG, "onDestroy() called")
         super.onDestroy()
-        prefs().isCurrentWallPaper = false
+//        prefs().isCurrentWallPaper = false
     }
 
 
@@ -60,7 +60,7 @@ class LiveWallService : OpenGLES2WallpaperService() {
 
         init {
             val prefs = prefs()
-            prefs.isCurrentWallPaper = WallpaperManager.getInstance(applicationContext).wallpaperInfo?.packageName == applicationContext.packageName ?: false
+//            prefs.isCurrentWallPaper = WallpaperManager.getInstance(applicationContext).wallpaperInfo?.packageName == applicationContext.packageName ?: false
             prefs.currentPage = 1
             resetEngineImpl()
             receiver = object : BroadcastReceiver() {
@@ -114,8 +114,8 @@ class LiveWallService : OpenGLES2WallpaperService() {
 
         private fun refreshWallpaper(interval: Long = prefs().refreshInterval.toLong()) {
             Log.d(TAG, "refreshWallpaper() called with: interval = [ $interval ]")
-            prefs().hasCustomOffset = false
-            prefs().customOffsetValue = 0F
+            prefs().temporarilyEnableCustomOffset = false
+            prefs().temporarilyCustomOffsetValue = 0F
             if (::timer.isInitialized) timer.dispose()
             timer = Observable.timer(interval, TimeUnit.SECONDS).subscribe {
                 refreshWallpaper()
@@ -140,10 +140,12 @@ class LiveWallService : OpenGLES2WallpaperService() {
             //start activity by PendingIntent to get rid of the 5 seconds delay after pressing home button
             //detail see here : https://stackoverflow.com/questions/5600084/starting-an-activity-from-a-service-after-home-button-pressed-without-the-5-seco
             Intent(this@LiveWallService, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .setAction(ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setAction(ACTIVITY_ACTION_PHOTO_DETAIL)
                     .let {
-                        PendingIntent.getActivity(applicationContext, 0, it, PendingIntent.FLAG_CANCEL_CURRENT).send()
+                        var flag = PendingIntent.FLAG_CANCEL_CURRENT
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flag = flag or PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.getActivity(applicationContext, 0, it, flag).send()
                     }
 
 //            }

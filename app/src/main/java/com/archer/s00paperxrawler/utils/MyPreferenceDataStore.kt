@@ -57,12 +57,14 @@ class MyPreferenceDataStore : PreferenceDataStore() {
     override fun putBoolean(key: String?, value: Boolean) {
         when (key) {
             getMyString(R.string.mode_key) -> pref.currentMode = value
+            getMyString(R.string.permanently_enable_custom_offset_key) -> pref.permanentlyEnableCustomOffset = value
         }
     }
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean {
         when (key) {
             getMyString(R.string.mode_key) -> pref.currentMode
+            getMyString(R.string.permanently_enable_custom_offset_key) -> pref.permanentlyEnableCustomOffset
         }
         return defValue
     }

@@ -6,11 +6,15 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.archer.s00paperxrawler.view.DoubleTapPhotoDetailFragment
+import com.archer.s00paperxrawler.view.HistoryBrowserFragment
+import com.archer.s00paperxrawler.view.HistoryDetailFragment
+import com.archer.s00paperxrawler.view.PhotoDetailFragment
 import com.archer.s00paperxrawler.view.SettingsFragment
 
 private const val TAG = "MainActivity"
-const val ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL = "double_tap_photo_detail"
+const val ACTIVITY_ACTION_PHOTO_DETAIL = "action_double_tap_photo_detail"
+const val ACTIVITY_ACTION_HISTORY = "action_history"
+const val ACTIVITY_ACTION_HISTORY_DETAIL = "action_history_detail"
 
 class MainActivity : AppCompatActivity() {
     private var menuRes = -1
@@ -21,27 +25,48 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.my_toolbar))
-        setContentFragment(intent?.action)
+        setContentFragment(intent)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        setContentFragment(intent?.action)
+        setContentFragment(intent)
     }
 
-    private fun setContentFragment(action: String?) {
-        val replace: Boolean
-        when (action) {
-            ACTIVITY_ACTION_DOUBLE_TAP_PHOTO_DETAIL -> {
-                replace = !DoubleTapPhotoDetailFragment::class.isInstance(currentView)
-                if (replace) currentView = DoubleTapPhotoDetailFragment()
+    private fun setContentFragment(intent: Intent?) {
+        if (intent == null) return
+        var backstack = false
+        var name = ""
+        when (intent.action) {
+            ACTIVITY_ACTION_PHOTO_DETAIL -> {
+                currentView = PhotoDetailFragment()
+                val extras = intent.extras
+                if (extras != null) {
+                    backstack = true//extras is not null means this action not from double-tap-wallpaper, need navigation.
+                    name = ACTIVITY_ACTION_PHOTO_DETAIL
+                }
+                currentView!!.arguments = extras
+            }
+            ACTIVITY_ACTION_HISTORY -> {
+                currentView = HistoryBrowserFragment()
+                backstack = true
+                name = ACTIVITY_ACTION_HISTORY
+            }
+            ACTIVITY_ACTION_HISTORY_DETAIL -> {
+                currentView = HistoryDetailFragment()
+                currentView!!.arguments = intent.extras
+                backstack = true
+                name = ACTIVITY_ACTION_HISTORY_DETAIL
             }
             else -> {
-                replace = !SettingsFragment::class.isInstance(currentView)
-                if (replace) currentView = SettingsFragment()
+                currentView = SettingsFragment()
             }
         }
-        if (replace) supportFragmentManager.beginTransaction().replace(R.id.container, currentView!!).commit()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, currentView!!).apply {
+                if (backstack) addToBackStack(name)
+            }.commit()
+
     }
 
     fun requestResetMenu(menuRes: Int, menuActions: ((Int) -> Boolean)) {
