@@ -154,9 +154,7 @@ enum class ResolverHelper {
 
     /**是否有本地图片信息*/
     fun hasLocalPhotosInfo(): Boolean {
-        return getCR().queryAdapter(MyUri.LOCAL_PHOTO_INFO_URI, arrayOf(BaseColumns._ID))?.use { it.count > 0 }
-                ?: false
-
+        return getCR().queryAdapter(MyUri.LOCAL_PHOTO_INFO_URI, arrayOf(BaseColumns._ID)).use { it.count > 0 }
     }
 
     /**添加本地图片信息*/
@@ -242,9 +240,11 @@ enum class ResolverHelper {
     }
 
     fun getWebHistory(projection: Array<String>?) =
-            getCR().queryAdapter(MyUri.PAPER_HISTORY_URI,
-                    projection,
-                    null, null, "${PaperInfoColumns.SETTLED_DATE} ASC")
+        getCR().queryAdapter(
+            MyUri.PAPER_HISTORY_URI,
+            projection,
+            null, null, "${PaperInfoColumns.SETTLED_DATE} DESC"
+        )
 
     fun getCurrentWebPhotoDetail(projection: Array<String>?) =
             getCR().queryAdapter(MyUri.PAPER_INFO_URI, projection,
