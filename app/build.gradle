@@ -9,11 +9,11 @@ ext {
     authority = appId
 }
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     defaultConfig {
         applicationId appId
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode 3
         versionName verName
 //        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
