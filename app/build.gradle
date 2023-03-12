@@ -5,7 +5,7 @@ apply from: './signing_config.gradle'
 
 ext {
     appId = "com.archer.s00paperxrawler"
-    verName = "2.1"
+    verName = "2.2"
     authority = appId
 }
 android {
@@ -14,7 +14,7 @@ android {
         applicationId appId
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 3
+        versionCode 4
         versionName verName
 //        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders = [
