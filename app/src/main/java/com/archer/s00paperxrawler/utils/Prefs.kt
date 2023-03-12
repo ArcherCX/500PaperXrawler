@@ -4,6 +4,7 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Point
+import android.os.Build
 import android.text.TextUtils
 import android.view.WindowManager
 import androidx.preference.PreferenceManager
@@ -97,11 +98,15 @@ enum class Prefs {
             var aspect = pref.getFloat("wallpaper_view_ratio", -1F)
             if (aspect == -1F) {
                 val wm = getMyAppCtx().getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val point = Point()
-                wm.defaultDisplay.getRealSize(point)
-                val w = point.x.toFloat()
-                val h = point.y
-                aspect = w / h
+                aspect = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    val point = Point()
+                    wm.defaultDisplay.getRealSize(point)
+                    val w = point.x.toFloat()
+                    val h = point.y
+                    w / h
+                } else {
+                    wm.currentWindowMetrics.bounds.let { it.width() / it.height().toFloat() }
+                }
                 pref.edit().putFloat("wallpaper_view_ratio", aspect).apply()
             }
             return aspect
@@ -140,7 +145,7 @@ enum class Prefs {
 
     /**是否当前壁纸应用*/
     val isCurrentWallPaper: Boolean
-        get() = WallpaperManager.getInstance(getMyAppCtx()).wallpaperInfo?.packageName == getMyAppCtx().packageName ?: false/*pref.getBoolean("is_current_wall_paper", false)*/
+        get() = WallpaperManager.getInstance(getMyAppCtx()).wallpaperInfo?.packageName == getMyAppCtx().packageName/*pref.getBoolean("is_current_wall_paper", false)*/
 //        set(value) = pref.edit().putBoolean("is_current_wall_paper", value).apply()
 
     val showNSFW: Boolean

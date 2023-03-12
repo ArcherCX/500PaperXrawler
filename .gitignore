@@ -141,3 +141,4 @@ fabric.properties
 /app/src/test/
 /.idea/
 app/signing_config.gradle
+app/src/sslDebug/res/raw/charles.pem

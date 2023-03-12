@@ -26,7 +26,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.snackbar.Snackbar
 import kotlin.math.absoluteValue
 
-private const val TAG = "DoubleTapPhotoDetailFra"
+private const val TAG = "PhotoDetailFragment"
 const val EXTRAS_WALLPAPER_CHANGE_PERMANENTLY = "extras_wallpaper_change_permanently"
 
 /**
@@ -42,6 +42,7 @@ class PhotoDetailFragment : Fragment(R.layout.photo_detail_layout) {
     @SuppressLint("ClickableViewAccessibility", "UseRequireInsteadOfGet")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated() called with: view = $view, savedInstanceState = $savedInstanceState")
         val path = if (prefs().currentMode) {
             onViewCreatedForWebMode(view)
         } else {
@@ -62,7 +63,8 @@ class PhotoDetailFragment : Fragment(R.layout.photo_detail_layout) {
             return@setOnTouchListener gestureDetector.onTouchEvent(event)
         }
         iv.post {
-            Log.i(TAG, "onViewCreated: iv.post")
+            Log.i(TAG, "onViewCreated: iv.post $view")
+            if (!isAdded) return@post
             val finalViewWidth = prefs().wallPaperViewRatio * iv.height
             target = Glide.with(this@PhotoDetailFragment)
                 .load(path)
@@ -159,7 +161,13 @@ class PhotoDetailFragment : Fragment(R.layout.photo_detail_layout) {
         return false
     }
 
+    override fun onDestroyView() {
+        Log.d(TAG, "onDestroyView() called, $this, view = $view")
+        super.onDestroyView()
+    }
+
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy() called $this, view = $view")
         super.onDestroy()
         if (::target.isInitialized) {
             Glide.with(this).clear(target)
@@ -182,13 +190,13 @@ class PhotoDetailFragment : Fragment(R.layout.photo_detail_layout) {
         private var preOffset = if (permanent) pref.permanentCustomOffsetValue else pref.temporarilyCustomOffsetValue
         private var newOffset: Float = 0F
 
-        override fun onDown(e: MotionEvent?): Boolean {
+        override fun onDown(e: MotionEvent): Boolean {
             Log.d(TAG, "onDown() called with: dw = ${iv.drawable.intrinsicWidth}, dh = ${iv.drawable.intrinsicHeight}")
             scrollPrepare(iv.width, iv.height, iv.drawable.intrinsicWidth * scale, iv.drawable.intrinsicHeight * scale)
             return true
         }
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             Log.i(TAG, "onScroll() called with: distanceX = $distanceX, distanceY = $distanceY\", e1 = $e1, e2 = $e2")
             if (adjustX) {
                 var newOffsetX = oldOffsetX - distanceX
